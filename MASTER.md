@@ -118,6 +118,8 @@ The MVP is:
 - regeneration;
 - downloads;
 - usage tracking;
+- automatic organization creation on signup;
+- free trial credits (3 per organization, no card required);
 - basic credits;
 - Stripe billing;
 - analytics;
@@ -159,7 +161,15 @@ No microservices.
 
 No separate backend.
 
-No external queue unless required later.
+No external queue unless required later (no Redis, no BullMQ).
+
+Worker:
+
+Supabase Edge Functions.
+
+Job trigger/retry:
+
+Vercel Cron.
 
 ---
 
@@ -192,9 +202,17 @@ Supabase Storage
 
 AI:
 
-FLUX primary
+Initial provider:
+OpenAI Images API (GPT Image 2)
 
-OpenAI GPT Image 2 fallback
+Future alternative:
+FLUX
+
+Worker:
+
+Supabase Edge Functions
+
+Vercel Cron
 
 Payments:
 
@@ -315,7 +333,7 @@ Defines:
 - adapters;
 - jobs;
 - prompts;
-- fallback.
+- provider errors and retries.
 
 Use when modifying image generation.
 
@@ -507,7 +525,7 @@ Good:
 
 Good:
 
-"Implement FluxAdapter."
+"Implement OpenAIAdapter."
 
 Bad:
 
@@ -812,6 +830,10 @@ Users can register and login.
 
 Users belong to an organization.
 
+An organization is created automatically on signup.
+
+The first user of an organization is the owner.
+
 ### Security
 
 RLS prevents cross-organization access.
@@ -852,6 +874,12 @@ Users can download the result.
 
 Generations are recorded.
 
+Each organization receives 3 free generations (no card required).
+
+Credit control and decrement happen exclusively in the backend.
+
+When free credits are exhausted, new generations are blocked and the payment conversion flow is shown.
+
 ### Billing
 
 Subscriptions are handled by Stripe.
@@ -883,6 +911,8 @@ Do not build:
 - GraphQL;
 - tRPC;
 - complex queues;
+- Redis;
+- BullMQ;
 - custom billing;
 - custom authentication;
 - custom object storage;
@@ -899,7 +929,7 @@ Unless a future requirement proves that one is necessary.
 
 The architecture should allow:
 
-- additional AI providers;
+- additional AI providers (e.g., FLUX);
 - better workers;
 - external queues;
 - larger storage;

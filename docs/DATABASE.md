@@ -38,6 +38,12 @@ Roles iniciales:
 - owner
 - agent
 
+La organización se crea automáticamente en el registro del primer usuario.
+
+El primer usuario de una organización es owner.
+
+La invitación de agentes es una funcionalidad posterior (post-MVP).
+
 ---
 
 ### properties
@@ -128,6 +134,20 @@ Campos:
 - created_at
 - updated_at
 
+plan:
+
+- free
+- basic
+- pro
+
+Al registrarse, la organización recibe una fila de suscripción:
+
+plan = free
+
+credits_limit = 3
+
+Sin tarjeta ni cliente de Stripe hasta la conversión.
+
 ---
 
 ### usage_ledger
@@ -145,12 +165,23 @@ Campos:
 - reason
 - created_at
 
-Estados/reasons posibles:
+Semántica:
 
-- billable
-- free
-- retry
-- provider_error
+status:
+
+- billable: consumo cobrado o correspondiente al plan;
+- free: consumo dentro de los créditos gratuitos;
+- retry: reintento de un job;
+- provider_error: fallo del proveedor (no descuenta créditos).
+
+reason:
+
+justificación adicional del asiento cuando sea necesaria.
+
+Separar status y reason:
+
+- status define la clase de consumo;
+- reason documenta el motivo sin mezclarse con el estado.
 
 ---
 
@@ -265,6 +296,28 @@ Utilizar:
 - check constraints;
 
 cuando corresponda.
+
+### Decremento atómico de créditos
+
+El consumo de créditos debe realizarse con una operación atómica:
+
+UPDATE subscriptions
+SET credits_used = credits_used + 1
+WHERE organization_id = :org
+AND credits_used < credits_limit
+RETURNING *;
+
+Si no se devuelve fila:
+
+la organización no tiene crédito disponible.
+
+Este patrón evita:
+
+- condiciones de carrera;
+- sobreconsumo;
+- desbordamiento del límite.
+
+El control de créditos nunca se implementa en el frontend.
 
 ---
 

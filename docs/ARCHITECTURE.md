@@ -21,9 +21,11 @@ El MVP utilizará:
 - Supabase como backend principal;
 - servicios externos mediante adaptadores;
 - jobs de IA almacenados en PostgreSQL;
-- workers simples.
+- un worker simple en Supabase Edge Functions.
 
 No utilizar microservicios durante el MVP.
+
+No utilizar Redis, BullMQ ni colas externas durante el MVP.
 
 ---
 
@@ -41,13 +43,15 @@ Supabase
 
 Servicios externos:
 
-Next.js / Worker
+Next.js
+↓
+Supabase Edge Functions (worker de IA)
 ↓
 ImageGenerationService
 ↓
 ProviderAdapter
-├── Flux
-└── OpenAI
+├── OpenAI Images API (inicial)
+└── FLUX (alternativa futura)
 
 Otros:
 
@@ -55,6 +59,7 @@ Stripe
 Sentry
 PostHog
 Vercel
+Vercel Cron (trigger/retry de jobs)
 
 ---
 
@@ -126,7 +131,9 @@ Responsabilidad:
 - storage;
 - configuración;
 - deployment;
-- jobs.
+- jobs;
+- worker de IA (Edge Function);
+- scheduler (Vercel Cron).
 
 ---
 
@@ -160,7 +167,7 @@ UI
 → create generation
 → pending
 
-Worker
+Worker (Supabase Edge Function)
 → claim job
 → processing
 → ImageGenerationService
@@ -171,11 +178,19 @@ Worker
 → generation succeeded
 → UsageService.
 
+Vercel Cron invoca al worker para procesar jobs pendientes y reintentar jobs fallidos recuperables.
+
 ---
 
 ## 6. Jobs de IA
 
 Una generación es un job.
+
+El job vive en la tabla de generaciones (PostgreSQL).
+
+Un worker implementado como Supabase Edge Function procesa los jobs.
+
+Vercel Cron activa el worker periódicamente y reintenta jobs pendientes o fallidos recuperables.
 
 Estados:
 
@@ -206,6 +221,22 @@ El worker debe:
 - ejecutar proveedor;
 - actualizar resultado;
 - gestionar errores.
+
+La reclamación de un job debe ser atómica:
+
+UPDATE generations
+SET status = 'processing'
+WHERE id = :jobId
+AND status = 'pending'
+RETURNING *;
+
+Un UPDATE con condición de estado garantiza que solo un worker reclamará cada job.
+
+Debe existir un límite de concurrencia por organización:
+
+número máximo de generaciones en processing simultáneamente.
+
+Si se supera, el job permanece pending para la siguiente pasada.
 
 ---
 
@@ -250,8 +281,8 @@ ProviderAdapter
 Ejemplo:
 
 ImageGenerationService
-→ FluxAdapter
-→ OpenAIAdapter
+→ OpenAIAdapter (inicial)
+→ FluxAdapter (futuro)
 
 ---
 
@@ -264,7 +295,7 @@ No introducir:
 - tRPC;
 - monorepo;
 - sistemas de plugins;
-- colas externas;
+- colas externas (Redis, BullMQ, u otras);
 - Kubernetes;
 - arquitectura distribuida;
 

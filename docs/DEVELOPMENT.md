@@ -241,6 +241,11 @@ pnpm test
 pnpm test:e2e
 pnpm build
 
+Supabase local:
+
+supabase start
+supabase functions serve
+
 Los comandos reales deben reflejar package.json.
 
 ---

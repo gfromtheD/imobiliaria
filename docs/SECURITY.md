@@ -74,6 +74,20 @@ No confiar únicamente en:
 
 Cada operación sensible debe verificar autorización server-side y/o mediante RLS.
 
+### Créditos
+
+El control y decremento de créditos ocurre exclusivamente en el backend.
+
+El frontend nunca:
+
+- descuenta créditos;
+- decide entitlement;
+- autoriza generaciones.
+
+Si un usuario manipula el frontend:
+
+el backend debe rechazar la generación cuando no exista crédito.
+
 ---
 
 ## 7. Uploads

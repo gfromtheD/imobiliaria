@@ -59,6 +59,16 @@ Next.js full-stack + Supabase.
 
 No crear un backend Node/Python separado para el MVP.
 
+Worker de IA:
+
+Supabase Edge Functions.
+
+Job trigger/retry:
+
+Vercel Cron.
+
+No utilizar Redis, BullMQ ni colas externas para el MVP.
+
 ---
 
 ## Database
@@ -93,17 +103,19 @@ Signed URLs para acceso cuando corresponda.
 
 ## AI
 
-Proveedor principal:
+Proveedor inicial:
 
-FLUX mediante Fal.ai o proveedor equivalente definido durante implementación.
+OpenAI Images API (GPT Image 2).
 
-Proveedor fallback:
+Alternativa futura:
 
-OpenAI GPT Image 2.
+FLUX.
 
 La aplicación utilizará ImageGenerationService.
 
 La UI nunca llamará directamente al proveedor.
+
+Los proveedores se integran mediante ProviderAdapter.
 
 ---
 
@@ -126,12 +138,14 @@ No construir billing propio.
 
 Vercel para Next.js.
 
+Vercel Cron para el trigger/retry de jobs de generación.
+
 Supabase para:
 
 - database;
 - auth;
 - storage;
-- edge functions.
+- edge functions (worker de IA).
 
 ---
 

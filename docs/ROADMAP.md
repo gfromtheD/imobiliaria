@@ -20,6 +20,8 @@ Crear la base técnica.
 - configurar Tailwind;
 - configurar shadcn/ui;
 - configurar Supabase;
+- configurar Supabase CLI local;
+- configurar Edge Functions localmente;
 - configurar variables de entorno;
 - configurar lint;
 - configurar tests;
@@ -36,7 +38,7 @@ Aplicación ejecutándose localmente.
 ### Tareas
 
 - Supabase Auth;
-- register;
+- register (con auto-creación de organización);
 - login;
 - logout;
 - password reset;
@@ -48,6 +50,8 @@ Aplicación ejecutándose localmente.
 ### Resultado
 
 Un usuario puede acceder únicamente a su organización.
+
+Su organización se crea automáticamente en el registro.
 
 ---
 
@@ -104,17 +108,21 @@ La inmobiliaria puede gestionar sus propiedades y fotografías.
 - GenerationService;
 - ImageGenerationService;
 - ProviderAdapter;
-- FluxAdapter;
-- OpenAIAdapter;
+- OpenAIAdapter (proveedor inicial);
+- FluxAdapter (alternativa futura, no incluida en esta fase);
 - generation states;
-- worker;
+- worker (Supabase Edge Function);
+- scheduler (Vercel Cron);
 - retry;
-- fallback;
 - almacenamiento de resultado.
 
 ### Resultado
 
 Una fotografía puede transformarse mediante IA.
+
+El worker procesa los jobs de forma asíncrona.
+
+Vercel Cron activa y reintenta.
 
 ---
 
@@ -140,7 +148,12 @@ Flujo principal completo.
 ### Tareas
 
 - credits;
+- 3 créditos gratuitos por organización al registrarse;
+- sin tarjeta para usar los créditos gratuitos;
 - entitlement;
+- decremento de créditos exclusivamente backend;
+- bloqueo de generación al agotar créditos;
+- flujo de conversión a pago;
 - usage ledger;
 - cost estimate;
 - límites;
@@ -150,6 +163,8 @@ Flujo principal completo.
 ### Resultado
 
 Sabemos cuánto consume cada organización.
+
+Controlamos los créditos gratuitos sin depender del frontend.
 
 ---
 
@@ -163,11 +178,14 @@ Sabemos cuánto consume cada organización.
 - webhooks;
 - plans;
 - entitlement;
+- conversion desde free;
 - cancellation.
 
 ### Resultado
 
 La aplicación puede cobrar.
+
+Los créditos gratuitos agotados se convierten en suscripciones de pago.
 
 ---
 
@@ -313,6 +331,8 @@ Después de validar:
 6. Analizar pricing.
 7. Mejorar UX.
 8. Añadir funcionalidades según demanda real.
+9. Invitaciones de agentes.
+10. FLUX como segundo proveedor.
 
 No construir features grandes basándose únicamente en hipótesis.
 

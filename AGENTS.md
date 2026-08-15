@@ -65,7 +65,7 @@ Do not:
 - introduce GraphQL without explicit approval;
 - introduce tRPC without explicit approval;
 - create a monorepo;
-- create an external queue for the MVP;
+- create an external queue for the MVP (no Redis, no BullMQ);
 - rewrite working code unnecessarily.
 
 ---
@@ -83,21 +83,24 @@ Official stack:
 - PostgreSQL
 - Supabase Auth
 - Supabase Storage
+- Supabase Edge Functions (AI worker)
 - Vercel
+- Vercel Cron (job trigger/retry)
 - Stripe
 - Sentry
 - PostHog
+- Vercel Analytics
 - Vitest
 - Playwright
 - GitHub Actions
 
 AI:
 
-Primary:
-FLUX
+Initial provider:
+OpenAI Images API (GPT Image 2)
 
-Fallback:
-OpenAI GPT Image 2
+Future alternative:
+FLUX
 
 ---
 
@@ -153,7 +156,7 @@ React component
 → OpenAI
 
 React component
-→ Flux
+→ any AI provider SDK
 
 ---
 
@@ -222,7 +225,7 @@ Good:
 
 Good:
 
-"Implement FluxAdapter."
+"Implement OpenAIAdapter."
 
 Bad:
 

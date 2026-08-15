@@ -72,13 +72,13 @@ Supabase Edge Functions
 
 ### AI
 
-Primary:
+Initial provider:
+
+OpenAI Images API (GPT Image 2)
+
+Future alternative:
 
 FLUX
-
-Fallback:
-
-OpenAI GPT Image 2
 
 ### Payments
 
@@ -87,6 +87,10 @@ Stripe
 ### Hosting
 
 Vercel
+
+Vercel Cron (job trigger/retry)
+
+Supabase Edge Functions (AI worker)
 
 ### Monitoring
 
@@ -201,6 +205,10 @@ Supabase provides:
 
 AI generation runs asynchronously through jobs.
 
+The worker runs as a Supabase Edge Function.
+
+Vercel Cron triggers and retries pending jobs.
+
 ---
 
 ## AI flow
@@ -208,7 +216,7 @@ AI generation runs asynchronously through jobs.
 User
 → image upload
 → generation job
-→ worker
+→ worker (Supabase Edge Function)
 → ImageGenerationService
 → ProviderAdapter
 → AI provider

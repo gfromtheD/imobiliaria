@@ -48,7 +48,13 @@ Organization
 → Generations
 → Usage.
 
+La organización se crea automáticamente durante el registro.
+
+El primer usuario de la organización es owner.
+
 El MVP puede limitar cada usuario a una organización principal.
+
+La invitación de agentes queda fuera del MVP inicial.
 
 ---
 
@@ -147,6 +153,10 @@ El sistema:
 9. actualiza estado;
 10. registra uso.
 
+El procesamiento en background lo realiza el worker (Supabase Edge Functions).
+
+Vercel Cron activa el worker y reintenta jobs.
+
 ---
 
 ### 2.8 Estados de generación
@@ -211,6 +221,21 @@ Los errores del proveedor no deben descontar créditos.
 
 ---
 
+### 2.13 Créditos gratuitos
+
+Cada organización recibe 3 generaciones gratuitas al registrarse.
+
+No se solicita tarjeta de crédito.
+
+Reglas:
+
+- el decremento de créditos ocurre exclusivamente en el backend;
+- al agotar los créditos gratuitos, se bloquea la creación de nuevas generaciones;
+- el usuario ve un flujo de conversión a pago;
+- la conversión a pago es una fase posterior (Fase 7).
+
+---
+
 ## 3. Funcionalidades fuera del MVP
 
 No incluir:
@@ -226,6 +251,7 @@ No incluir:
 - realidad aumentada;
 - integraciones con portales;
 - sistema avanzado de equipos;
+- invitaciones de agentes;
 - white-label;
 - multi-organización por usuario;
 - múltiples proveedores seleccionables por cliente;
@@ -273,7 +299,9 @@ El MVP no se considera funcional hasta que:
 
 - un usuario puede registrarse;
 - puede iniciar sesión;
-- pertenece a una organización;
+- pertenece a una organización creada automáticamente;
+- el primer usuario es owner;
+- dispone de 3 generaciones gratuitas sin tarjeta;
 - puede crear propiedad;
 - puede crear habitación;
 - puede subir fotografía;
@@ -287,7 +315,9 @@ El MVP no se considera funcional hasta que:
 - puede descargar;
 - los datos están aislados entre organizaciones;
 - el consumo se registra;
-- los errores se gestionan.
+- los errores se gestionan;
+- al agotar los créditos gratuitos se bloquea la generación;
+- el usuario es dirigido al flujo de conversión.
 
 ---
 

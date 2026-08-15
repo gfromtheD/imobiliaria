@@ -6,24 +6,23 @@ Definir cómo funciona la generación de virtual staging y cómo se integra la i
 
 ---
 
-## 2. Proveedor principal
+## 2. Proveedor inicial
 
-FLUX mediante Fal.ai o proveedor equivalente elegido durante implementación.
+OpenAI Images API (GPT Image 2).
+
+Es el proveedor con el que se desarrolla el MVP.
 
 ---
 
-## 3. Proveedor fallback
+## 3. Alternativa futura
 
-OpenAI GPT Image 2.
+FLUX.
 
-El fallback existe para:
+Se contempla como segundo proveedor para fases posteriores del producto.
 
-- errores;
-- indisponibilidad;
-- rate limits;
-- fallos repetidos.
+Un segundo proveedor no debe introducirse sin decisión explícita.
 
-No debe utilizarse automáticamente por cualquier error transitorio sin lógica de retry.
+Cualquier cambio de proveedor debe respetar la capa de adaptadores.
 
 ---
 
@@ -84,13 +83,13 @@ GenerationResult:
 
 Crear:
 
-FluxAdapter
+OpenAIAdapter (inicial)
 
-OpenAIAdapter
+FluxAdapter (futuro)
 
 No crear un sistema genérico de plugins.
 
-Dos adaptadores son suficientes para el MVP.
+Implementar únicamente los adaptadores necesarios.
 
 ---
 
@@ -137,7 +136,7 @@ pending
 
 ### Paso 5
 
-Worker obtiene job.
+Worker (Supabase Edge Function, invocado por Vercel Cron) obtiene job.
 
 ### Paso 6
 
@@ -192,7 +191,7 @@ retry.
 
 Si no:
 
-fallback o failed.
+failed.
 
 ---
 

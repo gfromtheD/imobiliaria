@@ -27,6 +27,28 @@ La aplicación mantiene el estado necesario para autorización de funcionalidade
 
 Modelo SaaS basado en suscripción.
 
+### Créditos gratuitos (fase inicial)
+
+Cada organización recibe 3 generaciones gratuitas al registrarse.
+
+No se solicita tarjeta de crédito.
+
+Flujo:
+
+- la organización inicia con el estado free;
+- el entitlement incluye los créditos gratuitos;
+- el control y decremento de créditos ocurre exclusivamente en el backend;
+- cuando los créditos gratuitos se agotan, se bloquea la creación de nuevas generaciones;
+- el usuario ve el flujo de conversión a pago.
+
+Los créditos gratuitos se modelan en la misma estructura de entitlements que los planes de pago.
+
+No introducir lógica de créditos en componentes UI.
+
+---
+
+## 4. Modelo de pago futuro
+
 El producto puede utilizar créditos incluidos en cada plan.
 
 Ejemplo conceptual:
@@ -41,7 +63,7 @@ Los valores definitivos de precio y créditos se validarán comercialmente.
 
 ---
 
-## 4. Crédito
+## 5. Crédito
 
 Un crédito representa una generación estándar.
 
@@ -51,17 +73,29 @@ El ledger registra el coste real estimado.
 
 ---
 
-## 5. Entitlement
+## 6. Entitlement
 
 Antes de crear una generación:
 
 1. identificar organization;
-2. obtener subscription;
+2. obtener subscription o estado free;
 3. comprobar status;
 4. comprobar credits;
 5. autorizar o rechazar.
 
 No iniciar generación si no existe entitlement válido.
+
+El decremento de créditos debe ser atómico:
+
+UPDATE subscriptions
+SET credits_used = credits_used + 1
+WHERE organization_id = :org
+AND credits_used < credits_limit
+RETURNING *;
+
+Si la actualización no devuelve fila, la organización no tiene crédito disponible.
+
+El cálculo del consumo nunca depende del cliente.
 
 ---
 
@@ -79,11 +113,13 @@ Debe permitir responder:
 
 ---
 
-## 7. Errores
+## 8. Errores
 
 Si el proveedor falla:
 
 No cobrar crédito al cliente.
+
+Esto aplica tanto a créditos gratuitos como de pago.
 
 Registrar:
 
@@ -124,23 +160,30 @@ Los webhooks deben:
 
 ---
 
-## 10. Estado de suscripción
+## 11. Estado de suscripción
 
 Estados mínimos:
 
+free
 trialing
 active
 past_due
 canceled
 incomplete
 
+free:
+
+organización sin suscripción de pago que opera con créditos gratuitos.
+
 La aplicación debe traducir el estado de Stripe a entitlement.
 
 ---
 
-## 11. Billing y generación
+## 12. Billing y generación
 
 No llamar a Stripe directamente desde componentes UI.
+
+No implementar control de créditos en componentes UI.
 
 Flujo:
 
@@ -152,7 +195,7 @@ UI
 
 ---
 
-## 12. Pricing inicial
+## 13. Pricing inicial
 
 La hipótesis comercial inicial será aproximadamente:
 
@@ -176,7 +219,7 @@ Stripe debe ser la fuente de configuración de precios.
 
 ---
 
-## 13. Coste interno
+## 14. Coste interno
 
 El sistema debe registrar:
 
@@ -193,7 +236,7 @@ gross contribution.
 
 ---
 
-## 14. No hacer
+## 15. No hacer
 
 No construir:
 
@@ -205,7 +248,7 @@ No construir:
 
 ---
 
-## 15. Regla
+## 16. Regla
 
 Stripe gestiona el dinero.
 
