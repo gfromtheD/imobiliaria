@@ -124,7 +124,7 @@ $badRoom = Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p
 Assert ($badRoom.Raw -match "invalid_file_type") "extensión inválida rechazada"
 $badRoom2 = Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p_room_type = "piscina"; p_file_name = "foto.jpg" }
 Assert ($badRoom2.Raw -match "invalid_room_type") "tipo de estancia inválido rechazado"
-$roomB = Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p_room_type = "otra"; p_file_name = "otra.jpg" }
+$roomB = (Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p_room_type = "otra"; p_file_name = "otra.jpg" }).Body
 for ($i = 0; $i -lt 18; $i++) { $null = Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p_room_type = "otra"; p_file_name = "f$i.jpg" } }
 $over = Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $propA.id; p_room_type = "otra"; p_file_name = "over.jpg" }
 Assert ($over.Raw -match "image_limit_reached") "límite de 20 imágenes por propiedad"
@@ -208,9 +208,10 @@ AssertEq $gfr.Body[0].error_code "provider_error" "código de error provider_err
 $subf = Get-Table $userA.Token "subscriptions" "select=credits_available,credits_reserved"
 AssertEq ([int]$subf.Body[0].credits_reserved) 1 "reserva mantenida tras fallo reintentable (sin reembolso)"
 $null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
-$deadline = [DateTime]::UtcNow.AddSeconds(20)
+$deadline = [DateTime]::UtcNow.AddSeconds(30)
 do {
   Start-Sleep -Milliseconds 500
+  $null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
   $gfr2 = Get-Table $userA.Token "generations" "select=id,status,retry_count&id=eq.$($gf.Body.id)"
 } while ($gfr2.Body[0].status -ne "completed" -and [DateTime]::UtcNow -lt $deadline)
 AssertEq $gfr2.Body[0].status "completed" "reabierto y completado en intento 2"

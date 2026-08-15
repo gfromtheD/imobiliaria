@@ -28,6 +28,12 @@ function Sql($sql) {
   docker exec $container psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tA -c $sql 2>$null
 }
 
+# --- eliminar la carrera con el cron phase0-process-jobs durante TEST 1-3
+# (un tick del cron puede encolar el job entre el INSERT y la llamada manual de
+# process_jobs(), y el worker puede reclamarlo antes -> el contador manual da 0).
+# El TEST 4 lo re-programa para validar el cron end-to-end.
+Sql "select cron.unschedule('phase0-process-jobs') where exists (select 1 from cron.job where jobname = 'phase0-process-jobs');" | Out-Null
+
 # --- seed runtime config (edge_function_url reaches Kong from the postgres container)
 Sql "INSERT INTO public.phase0_config (key, value) VALUES
   ('edge_function_url', 'http://kong:8000/functions/v1/process-job'),
@@ -119,7 +125,7 @@ Say ""
 Say "=== TEST 3: error + retry — controlled failure, then safe reprocessing ==="
 $j3 = InsertJob '{"room_type":"cocina","style":"minimalista","fail":true}'
 $enq3 = (Sql "SELECT public.process_jobs(10);").Trim()
-Check ($enq3 -eq "1") "process_jobs() enqueued failure job"
+Check ($enq3 -eq "1") "process_jobs() enqueued failure job (got '$($enq3 -join '|')')"
 $s3 = WaitFor $j3 30 @("completed", "failed")
 Check ($s3.status -eq "failed") "job failed as forced (got $($s3.status))"
 if ($s3) {
@@ -144,6 +150,8 @@ if ($s3b) {
 
 Say ""
 Say "=== TEST 4: scheduler — pg_cron picks up a pending job automatically ==="
+Sql "select cron.unschedule('phase0-process-jobs');" | Out-Null
+Sql "select cron.schedule('phase0-process-jobs', '* * * * *', 'select public.process_jobs(10)');" | Out-Null
 $j4 = InsertJob '{"room_type":"sala","style":"escandinavo","test":"cron"}'
 Say "  inserted pending job, waiting for pg_cron tick (up to 110s) without calling process_jobs()"
 $s4 = WaitFor $j4 110 @("completed", "failed")
