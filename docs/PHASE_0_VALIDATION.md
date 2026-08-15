@@ -137,3 +137,10 @@ El pipeline asíncrono **funciona end-to-end en el entorno local** exactamente c
 4. Integrar créditos: reserva atómica al claim, devolución en `failed`/`cancelled`.
 
 **Se puede pasar a la siguiente fase.** No se construyó funcionalidad del MVP en esta prueba.
+
+## 12. Estado de las condiciones (Fase 1, 2026-08-15)
+
+- **Condición 2 cumplida:** el esquema del producto (properties, rooms, generations, subscriptions, usage_ledger) sustituyó a `image_jobs`/`phase0_config`, preservando claim atómico (`WHERE status='pending'` + `locked_at`), guardas de estado, `status_history` y trazabilidad. El esquema de Fase 0 se mantiene como artefacto de validación.
+- **Condiciones 3 y 4 cumplidas:** reintentos con límite (`retry_count`, `max_retries` = 3, `retry_interval`) y reserva/liberación atómica de créditos (`claim_generation` reserva, `fail_generation`/`cancel_generation` devuelven, solo en fallo definitivo).
+- **Condición 1 pendiente (producción):** el worker local se autentica con el JWT anon; en producción se configurará `service_role` vía variable de entorno.
+- **Compatibilidad del MockAdapter:** el adapter ahora devuelve el artefacto PNG de Fase 1 **y** los campos legacy que este documento verifica (`provider: "mock"`, `artifact`, `simulated`, `output_path`, ...), y detecta el fallo simulado tanto con `fail: true` en el payload (contrato de Fase 0, líneas 34/45/58) como con `parameters.mock_fail` (Fase 1). El harness de Fase 0 se ejecuta como regresión dentro de `supabase/tests/phase1_foundation.ps1` (sección 13) y permanece 100 % verde.
