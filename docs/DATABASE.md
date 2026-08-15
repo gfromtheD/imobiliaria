@@ -109,9 +109,33 @@ Campos:
 - prompt_version
 - parameters
 - error_code
+- locked_at
+- retry_count
 - created_at
 - started_at
 - completed_at
+
+status:
+
+- pending
+- processing
+- completed
+- failed
+- cancelled
+
+locked_at:
+
+marca el momento en que el job fue reclamado.
+
+Evita que otro proceso reclame el mismo job.
+
+retry_count:
+
+contador de reintentos (límite configurable).
+
+El output es determinista por job:
+
+la ruta de salida incluye el job_id.
 
 ---
 
@@ -127,8 +151,8 @@ Campos:
 - stripe_subscription_id
 - plan
 - status
-- credits_limit
-- credits_used
+- credits_available
+- credits_reserved
 - current_period_start
 - current_period_end
 - created_at
@@ -144,7 +168,9 @@ Al registrarse, la organización recibe una fila de suscripción:
 
 plan = free
 
-credits_limit = 3
+credits_available = 3
+
+credits_reserved = 0
 
 Sin tarjeta ni cliente de Stripe hasta la conversión.
 
@@ -266,7 +292,54 @@ Guardar:
 - metadata;
 - referencia.
 
-Los archivos viven en Storage.
+Los archivos viven en Supabase Storage.
+
+### Buckets
+
+Buckets privados:
+
+- original-images;
+- staged-images.
+
+### Rutas
+
+Originales:
+
+{organization_id}/{property_id}/{image_id}
+
+Resultados:
+
+{organization_id}/{property_id}/{image_id}/{job_id}
+
+### Acceso
+
+- signed URLs cortas para visualización;
+- signed URLs de descarga con expiración mayor.
+
+### Validación
+
+Formato:
+
+- JPEG;
+- PNG.
+
+Tamaño máximo:
+
+10 MB.
+
+Resolución máxima:
+
+4096 × 4096.
+
+Máximo:
+
+20 imágenes por propiedad.
+
+Una generación por job en el MVP.
+
+Sin procesamiento batch.
+
+La validación se realiza en backend, independientemente de la validación visual del frontend.
 
 ---
 
@@ -276,8 +349,22 @@ Generation status:
 
 pending
 processing
-succeeded
+completed
 failed
+cancelled
+
+Transiciones:
+
+pending
+→ processing
+→ completed
+
+pending
+→ processing
+→ failed
+
+pending
+→ cancelled
 
 No utilizar strings arbitrarios desde múltiples partes del código.
 
@@ -297,27 +384,48 @@ Utilizar:
 
 cuando corresponda.
 
-### Decremento atómico de créditos
+### Reserva atómica de créditos
 
-El consumo de créditos debe realizarse con una operación atómica:
+El consumo de créditos es transaccional y atómico:
+
+BEGIN;
+
+SELECT ... FOR UPDATE
+FROM subscriptions
+WHERE organization_id = :org;
+
+Si credits_available = 0:
+
+→ rechazar la generación (rollback).
 
 UPDATE subscriptions
-SET credits_used = credits_used + 1
-WHERE organization_id = :org
-AND credits_used < credits_limit
-RETURNING *;
+SET credits_available = credits_available - 1,
+    credits_reserved = credits_reserved + 1
+WHERE organization_id = :org;
 
-Si no se devuelve fila:
+Crear el job.
 
-la organización no tiene crédito disponible.
+COMMIT;
+
+Resultado al terminar la generación:
+
+- completed → el crédito reservado queda consumido;
+- error del proveedor → devolver crédito (reserved → available);
+- cancelación antes del procesamiento → devolver crédito (reserved → available).
 
 Este patrón evita:
 
 - condiciones de carrera;
 - sobreconsumo;
-- desbordamiento del límite.
+- doble consumo por retries.
 
 El control de créditos nunca se implementa en el frontend.
+
+### Límites configurables
+
+Los límites (concurrencia de generaciones, volumen por período, créditos) deben mantenerse configurables.
+
+No hardcodear límites de negocio en múltiples partes del código.
 
 ---
 
@@ -329,6 +437,7 @@ Preparar índices para:
 - property_id;
 - room_id;
 - generation status;
+- generation status + locked_at (reclamación de jobs);
 - created_at;
 - Stripe IDs.
 
@@ -368,6 +477,21 @@ Debe existir una estrategia para eliminar:
 - datos asociados.
 
 Las operaciones de eliminación deben respetar integridad y privacidad.
+
+Al eliminar una propiedad:
+
+- eliminar las imágenes asociadas (originales y generadas) en Storage;
+- eliminar generaciones y metadatos de uso asociados.
+
+### Retención
+
+Política provisional de MVP:
+
+24 meses como retención inicial.
+
+Es una política técnica provisional, no una afirmación jurídica definitiva.
+
+Debe revisarse antes del despliegue comercial formal.
 
 ---
 

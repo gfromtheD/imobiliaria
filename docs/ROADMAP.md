@@ -22,6 +22,7 @@ Crear la base técnica.
 - configurar Supabase;
 - configurar Supabase CLI local;
 - configurar Edge Functions localmente;
+- habilitar pg_cron (extensión de PostgreSQL);
 - configurar variables de entorno;
 - configurar lint;
 - configurar tests;
@@ -73,7 +74,7 @@ Crear:
 Configurar:
 
 - Storage;
-- buckets;
+- buckets privados original-images y staged-images;
 - RLS;
 - signed URLs.
 
@@ -108,21 +109,23 @@ La inmobiliaria puede gestionar sus propiedades y fotografías.
 - GenerationService;
 - ImageGenerationService;
 - ProviderAdapter;
-- OpenAIAdapter (proveedor inicial);
-- FluxAdapter (alternativa futura, no incluida en esta fase);
-- generation states;
+- OpenAIAdapter (candidato);
+- FluxAdapter (candidato);
+- MockAdapter (desarrollo sin API keys);
+- generation states (pending, processing, completed, failed, cancelled);
 - worker (Supabase Edge Function);
-- scheduler (Vercel Cron);
-- retry;
-- almacenamiento de resultado.
+- scheduler (pg_cron + process_jobs);
+- reclamación atómica de jobs (locked_at);
+- retries limitados (retry_count);
+- almacenamiento de resultado (staged-images).
 
 ### Resultado
 
 Una fotografía puede transformarse mediante IA.
 
-El worker procesa los jobs de forma asíncrona.
+El flujo completo puede probarse en modo mock, sin API keys.
 
-Vercel Cron activa y reintenta.
+pg_cron activa el worker y reintenta jobs pendientes o fallidos recuperables.
 
 ---
 
@@ -151,14 +154,17 @@ Flujo principal completo.
 - 3 créditos gratuitos por organización al registrarse;
 - sin tarjeta para usar los créditos gratuitos;
 - entitlement;
+- reserva transaccional de créditos (credits_available / credits_reserved);
+- devolución de créditos en error de proveedor o cancelación;
 - decremento de créditos exclusivamente backend;
 - bloqueo de generación al agotar créditos;
 - flujo de conversión a pago;
+- rate limiting en PostgreSQL (configurable);
 - usage ledger;
 - cost estimate;
 - límites;
 - provider errors;
-- retries.
+- retries sin doble cargo.
 
 ### Resultado
 
@@ -208,8 +214,9 @@ Eventos:
 - room_created;
 - image_uploaded;
 - generation_started;
-- generation_succeeded;
+- generation_completed;
 - generation_failed;
+- generation_cancelled;
 - image_downloaded;
 - subscription_started;
 - subscription_cancelled.
@@ -332,7 +339,8 @@ Después de validar:
 7. Mejorar UX.
 8. Añadir funcionalidades según demanda real.
 9. Invitaciones de agentes.
-10. FLUX como segundo proveedor.
+10. Decisión final de proveedor IA (OpenAI vs FLUX) tras pruebas reales con credenciales.
+11. Segundo proveedor activo según la decisión anterior.
 
 No construir features grandes basándose únicamente en hipótesis.
 

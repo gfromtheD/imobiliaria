@@ -26,6 +26,7 @@ Before changing code, read:
 3. docs/MVP.md
 4. docs/ARCHITECTURE.md
 5. docs/TECH_STACK.md
+6. docs/TECHNICAL_DECISIONS.md
 
 Then read the specific document relevant to the task.
 
@@ -65,7 +66,7 @@ Do not:
 - introduce GraphQL without explicit approval;
 - introduce tRPC without explicit approval;
 - create a monorepo;
-- create an external queue for the MVP (no Redis, no BullMQ);
+- create an external queue for the MVP (no Redis, no BullMQ, no Kafka);
 - rewrite working code unnecessarily.
 
 ---
@@ -84,8 +85,8 @@ Official stack:
 - Supabase Auth
 - Supabase Storage
 - Supabase Edge Functions (AI worker)
+- pg_cron (PostgreSQL job scheduler)
 - Vercel
-- Vercel Cron (job trigger/retry)
 - Stripe
 - Sentry
 - PostHog
@@ -96,11 +97,13 @@ Official stack:
 
 AI:
 
-Initial provider:
+Provider candidates (decision pending validation):
 OpenAI Images API (GPT Image 2)
-
-Future alternative:
 FLUX
+
+Both integrate via ProviderAdapter.
+Credentials come exclusively from environment variables.
+A mock adapter allows development without API keys.
 
 ---
 
@@ -204,10 +207,30 @@ Generation states:
 
 pending
 processing
-succeeded
+completed
 failed
+cancelled
+
+Expected flow:
+
+pending
+→ processing
+→ completed
+
+or:
+
+pending
+→ processing
+→ failed
+
+or:
+
+pending
+→ cancelled
 
 Do not introduce arbitrary state names.
+
+Jobs are idempotent and retries must never double-charge credits.
 
 ---
 

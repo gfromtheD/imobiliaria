@@ -70,15 +70,21 @@ Supabase Storage
 
 Supabase Edge Functions
 
+pg_cron (PostgreSQL job scheduler)
+
 ### AI
 
-Initial provider:
+Provider candidates (decision pending validation):
 
 OpenAI Images API (GPT Image 2)
 
-Future alternative:
-
 FLUX
+
+Both integrate via ProviderAdapter.
+
+Credentials come exclusively from environment variables.
+
+A mock adapter allows full development without API keys.
 
 ### Payments
 
@@ -87,10 +93,6 @@ Stripe
 ### Hosting
 
 Vercel
-
-Vercel Cron (job trigger/retry)
-
-Supabase Edge Functions (AI worker)
 
 ### Monitoring
 
@@ -139,6 +141,7 @@ docs/PRODUCT.md
 docs/MVP.md
 docs/ARCHITECTURE.md
 docs/TECH_STACK.md
+docs/TECHNICAL_DECISIONS.md
 docs/DATABASE.md
 docs/AI.md
 docs/BILLING.md
@@ -207,7 +210,7 @@ AI generation runs asynchronously through jobs.
 
 The worker runs as a Supabase Edge Function.
 
-Vercel Cron triggers and retries pending jobs.
+pg_cron (PostgreSQL) triggers and retries pending jobs.
 
 ---
 
@@ -216,12 +219,12 @@ Vercel Cron triggers and retries pending jobs.
 User
 → image upload
 → generation job
-→ worker (Supabase Edge Function)
+→ worker (Supabase Edge Function, scheduled by pg_cron)
 → ImageGenerationService
 → ProviderAdapter
 → AI provider
 → output storage
-→ generation succeeded
+→ generation completed
 → UI result.
 
 ---

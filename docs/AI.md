@@ -6,23 +6,44 @@ Definir cómo funciona la generación de virtual staging y cómo se integra la i
 
 ---
 
-## 2. Proveedor inicial
+## 2. Candidatos de proveedor
 
-OpenAI Images API (GPT Image 2).
+La decisión del proveedor principal NO está cerrada.
 
-Es el proveedor con el que se desarrolla el MVP.
+Candidatos:
+
+- OpenAI Images API (GPT Image 2);
+- FLUX.
+
+Ambos se integran mediante ProviderAdapter.
+
+Las credenciales proceden exclusivamente de variables de entorno.
+
+Nunca inventar o hardcodear API keys.
+
+La ausencia de API keys NO bloquea el desarrollo del MVP (ver modo mock).
+
+La decisión final se tomará comparando ambos candidatos con pruebas reales cuando existan credenciales.
 
 ---
 
-## 3. Alternativa futura
+## 3. Modo mock (desarrollo sin API keys)
 
-FLUX.
+Debe existir un modo de desarrollo/mock que permita probar:
 
-Se contempla como segundo proveedor para fases posteriores del producto.
+- creación del job;
+- procesamiento;
+- estados;
+- errores;
+- almacenamiento;
+- créditos;
+- UI;
 
-Un segundo proveedor no debe introducirse sin decisión explícita.
+sin realizar una generación real.
 
-Cualquier cambio de proveedor debe respetar la capa de adaptadores.
+Un MockAdapter implementa ProviderAdapter y devuelve resultados simulados.
+
+Se activa mediante variable de entorno (configuración), nunca por código client.
 
 ---
 
@@ -83,13 +104,24 @@ GenerationResult:
 
 Crear:
 
-OpenAIAdapter (inicial)
+OpenAIAdapter
 
-FluxAdapter (futuro)
+FluxAdapter
 
-No crear un sistema genérico de plugins.
+No crear un sistema de plugins complejo.
 
 Implementar únicamente los adaptadores necesarios.
+
+El Adapter traduce:
+
+- imagen original;
+- tipo de habitación;
+- estilo;
+- prompt;
+- configuración;
+- modelo;
+
+al formato requerido por cada proveedor.
 
 ---
 
@@ -136,7 +168,11 @@ pending
 
 ### Paso 5
 
-Worker (Supabase Edge Function, invocado por Vercel Cron) obtiene job.
+pg_cron ejecuta process_jobs().
+
+process_jobs() detecta jobs pendientes e invoca la Edge Function del worker (pg_net).
+
+La Edge Function reclama el job de forma atómica.
 
 ### Paso 6
 
@@ -160,7 +196,7 @@ Guardar imagen generada.
 
 Actualizar generation:
 
-succeeded
+completed
 
 ### Paso 11
 
@@ -187,11 +223,15 @@ Registrar:
 
 Si es recuperable:
 
-retry.
+retry (limitado, con locked_at y contador de reintentos).
 
 Si no:
 
 failed.
+
+Los reintentos no generan cargos duplicados.
+
+No existe failover automático entre proveedores durante el MVP.
 
 ---
 
@@ -207,6 +247,30 @@ Registrar:
 - model;
 - estimated cost;
 - credits.
+
+### Reserva y consumo
+
+El consumo de créditos es transaccional y atómico:
+
+1. bloquear la fila de créditos (SELECT ... FOR UPDATE);
+2. comprobar disponibilidad;
+3. reservar el crédito (credits_available → credits_reserved);
+4. crear el job;
+5. confirmar transacción.
+
+Si la generación termina correctamente:
+
+→ crédito consumido.
+
+Si falla por error del proveedor:
+
+→ devolver crédito.
+
+Si el usuario cancela antes del procesamiento:
+
+→ devolver crédito.
+
+Evitar cualquier doble consumo por retries o concurrencia.
 
 ---
 
@@ -293,16 +357,15 @@ No introducir infraestructura adicional solamente para evitar polling.
 
 ## 17. Rate limiting
 
-Debe existir límite por organización.
+Implementado en PostgreSQL (sin Redis).
 
-Evitar que:
+Límite por organización de:
 
-- errores de UI;
-- abuso;
-- scripts;
-- agentes automáticos;
+- generaciones simultáneas;
+- volumen de generaciones;
+- consumo de créditos.
 
-generen miles de imágenes accidentalmente.
+Los valores concretos deben mantenerse configurables.
 
 ---
 
@@ -335,7 +398,23 @@ ProviderAdapter / configuración.
 
 ---
 
-## 20. Regla
+## 20. Decisiones abiertas
+
+No cerrar definitivamente todavía:
+
+- OpenAI vs FLUX como proveedor principal;
+- modelo exacto;
+- modo de edición/mask;
+- configuración óptima del modelo;
+- comparación de calidad entre proveedores.
+
+Estas decisiones se resolverán mediante pruebas reales cuando estén disponibles las credenciales.
+
+Registradas en TECHNICAL_DECISIONS.md como PENDING VALIDATION.
+
+---
+
+## 21. Regla
 
 La IA es un servicio externo.
 

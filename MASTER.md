@@ -161,15 +161,17 @@ No microservices.
 
 No separate backend.
 
-No external queue unless required later (no Redis, no BullMQ).
+No external queue unless required later (no Redis, no BullMQ, no Kafka).
 
 Worker:
 
 Supabase Edge Functions.
 
-Job trigger/retry:
+Job scheduler:
 
-Vercel Cron.
+pg_cron (PostgreSQL) executes process_jobs(), which invokes the Edge Function worker.
+
+Vercel remains the Next.js deployment environment.
 
 ---
 
@@ -202,17 +204,19 @@ Supabase Storage
 
 AI:
 
-Initial provider:
+Provider candidates (decision pending validation):
 OpenAI Images API (GPT Image 2)
-
-Future alternative:
 FLUX
+
+Both integrate via ProviderAdapter.
+Credentials come exclusively from environment variables.
+A mock adapter allows full development without API keys.
 
 Worker:
 
 Supabase Edge Functions
 
-Vercel Cron
+pg_cron (PostgreSQL job scheduler)
 
 Payments:
 
@@ -407,6 +411,20 @@ Defines:
 Use to determine:
 
 "What should we build next?"
+
+---
+
+## TECHNICAL_DECISIONS.md
+
+Defines:
+
+- the decision register;
+- decision statuses (APPROVED / PROVISIONAL / PENDING VALIDATION);
+- open technical questions.
+
+Use when deciding:
+
+"Is this decision settled, or still pending validation?"
 
 ---
 
@@ -717,14 +735,15 @@ Allowed states:
 
 pending
 processing
-succeeded
+completed
 failed
+cancelled
 
 Expected flow:
 
 pending
 → processing
-→ succeeded
+→ completed
 
 or:
 
@@ -732,7 +751,16 @@ pending
 → processing
 → failed
 
-Retries must not corrupt state.
+or:
+
+pending
+→ cancelled
+
+Retries are limited and must not corrupt state.
+
+Job processing is idempotent and protected against duplicate claims.
+
+Retries must never double-charge credits.
 
 ---
 
@@ -760,7 +788,7 @@ Track:
 - property creation;
 - image upload;
 - generation started;
-- generation succeeded;
+- generation completed;
 - generation failed;
 - download;
 - subscription started;
@@ -878,6 +906,15 @@ Each organization receives 3 free generations (no card required).
 
 Credit control and decrement happen exclusively in the backend.
 
+Credit consumption is transactional:
+
+- credits_available / credits_reserved;
+- the credit is reserved at job creation;
+- consumed when the generation completes;
+- refunded on provider error;
+- refunded if the user cancels before processing;
+- retries never double-charge.
+
 When free credits are exhausted, new generations are blocked and the payment conversion flow is shown.
 
 ### Billing
@@ -913,6 +950,7 @@ Do not build:
 - complex queues;
 - Redis;
 - BullMQ;
+- Kafka;
 - custom billing;
 - custom authentication;
 - custom object storage;
@@ -929,7 +967,7 @@ Unless a future requirement proves that one is necessary.
 
 The architecture should allow:
 
-- additional AI providers (e.g., FLUX);
+- additional AI providers;
 - better workers;
 - external queues;
 - larger storage;

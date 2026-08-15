@@ -63,11 +63,13 @@ Worker de IA:
 
 Supabase Edge Functions.
 
-Job trigger/retry:
+Job scheduler:
 
-Vercel Cron.
+pg_cron (PostgreSQL).
 
-No utilizar Redis, BullMQ ni colas externas para el MVP.
+process_jobs() invoca la Edge Function del worker (pg_net).
+
+No utilizar Redis, BullMQ, Kafka ni colas externas para el MVP.
 
 ---
 
@@ -103,19 +105,22 @@ Signed URLs para acceso cuando corresponda.
 
 ## AI
 
-Proveedor inicial:
+Candidatos de proveedor (decisión pendiente de validación):
 
-OpenAI Images API (GPT Image 2).
+- OpenAI Images API (GPT Image 2);
+- FLUX.
 
-Alternativa futura:
+Ambos se integran mediante ProviderAdapter.
 
-FLUX.
+Credenciales exclusivamente desde variables de entorno.
 
-La aplicación utilizará ImageGenerationService.
+Modo mock (MockAdapter):
+
+permite desarrollar y probar el flujo completo sin API keys.
 
 La UI nunca llamará directamente al proveedor.
 
-Los proveedores se integran mediante ProviderAdapter.
+La decisión del proveedor principal se tomará tras pruebas reales comparativas con credenciales disponibles.
 
 ---
 
@@ -138,14 +143,13 @@ No construir billing propio.
 
 Vercel para Next.js.
 
-Vercel Cron para el trigger/retry de jobs de generación.
-
 Supabase para:
 
 - database;
 - auth;
 - storage;
-- edge functions (worker de IA).
+- edge functions (worker de IA);
+- pg_cron (job scheduler).
 
 ---
 

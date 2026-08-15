@@ -92,7 +92,14 @@ el backend debe rechazar la generación cuando no exista crédito.
 
 ## 7. Uploads
 
-Validar:
+Subida directa desde el navegador mediante Supabase Storage SDK.
+
+Las políticas RLS de Storage deben garantizar aislamiento por organización:
+
+- validar el prefijo de ruta {organization_id}/... contra la organización del usuario;
+- ningún usuario puede listar/leer/escribir en carpetas de otras organizaciones.
+
+Validar en backend:
 
 - MIME;
 - extensión;
@@ -100,15 +107,37 @@ Validar:
 - formato;
 - contenido cuando sea posible.
 
+Límites iniciales:
+
+- formatos: JPEG, PNG;
+- tamaño máximo: 10 MB;
+- resolución máxima: 4096 × 4096;
+- máximo: 20 imágenes por propiedad.
+
+La validación del backend es independiente de la validación visual del frontend.
+
 No aceptar URLs arbitrarias como fuente de imágenes durante el MVP.
 
 ---
 
 ## 8. Storage
 
-Buckets privados.
+Buckets privados:
 
-Acceso mediante signed URLs cuando corresponda.
+- original-images;
+- staged-images.
+
+Estructura:
+
+- originales: {organization_id}/{property_id}/{image_id};
+- resultados: {organization_id}/{property_id}/{image_id}/{job_id}.
+
+Acceso mediante signed URLs:
+
+- cortas para visualización;
+- con expiración mayor para descarga.
+
+Nunca exponer service_role al navegador.
 
 No exponer rutas internas de Storage innecesariamente.
 
@@ -116,11 +145,23 @@ No exponer rutas internas de Storage innecesariamente.
 
 ## 9. Rate limiting
 
-Aplicar límites a:
+Implementado en PostgreSQL.
+
+Sin Redis.
+
+Límites a nivel de organización sobre:
+
+- generaciones simultáneas;
+- volumen de generaciones;
+- consumo de créditos.
+
+Los valores concretos deben mantenerse configurables.
+
+No hardcodear límites de negocio en múltiples partes del código.
+
+Aplicar límites también a:
 
 - login;
-- generación;
-- regeneración;
 - endpoints sensibles.
 
 Especialmente generación IA.
@@ -171,13 +212,15 @@ Registrar eventos útiles:
 - excessive generation;
 - storage failures.
 
-No registrar:
+Sin payloads sensibles:
 
-- API keys;
-- passwords;
-- datos personales innecesarios;
-- secretos;
-- información sensible en texto plano.
+- no registrar imágenes;
+- no registrar API keys;
+- no registrar passwords;
+- no exponer información privada en analytics;
+- no registrar datos personales innecesarios;
+- no registrar secretos;
+- no registrar información sensible en texto plano.
 
 ---
 
@@ -191,6 +234,16 @@ El producto debe permitir:
 - eliminación de resultados;
 - mecanismos de retención.
 
+### Retención
+
+Política provisional de MVP:
+
+24 meses como retención inicial.
+
+Es una política técnica provisional, no una afirmación jurídica definitiva.
+
+Revisar antes del despliegue comercial formal.
+
 ---
 
 ## 15. Data deletion
@@ -202,6 +255,10 @@ Eliminar una propiedad debe tener una política clara sobre:
 - generated images;
 - generations;
 - usage metadata.
+
+Al eliminar una propiedad:
+
+las imágenes asociadas (originales y generadas) se eliminan junto con la propiedad.
 
 ---
 

@@ -155,7 +155,7 @@ El sistema:
 
 El procesamiento en background lo realiza el worker (Supabase Edge Functions).
 
-Vercel Cron activa el worker y reintenta jobs.
+pg_cron (PostgreSQL) ejecuta process_jobs() y activa el worker para procesar y reintentar jobs.
 
 ---
 
@@ -165,10 +165,26 @@ Estados mínimos:
 
 pending
 processing
-succeeded
+completed
 failed
+cancelled
+
+Transiciones:
+
+pending
+→ processing
+→ completed
+
+pending
+→ processing
+→ failed
+
+pending
+→ cancelled
 
 No deben existir estados ambiguos.
+
+Los reintentos son limitados y no duplican consumo de créditos.
 
 ---
 

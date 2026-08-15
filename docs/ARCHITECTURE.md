@@ -21,11 +21,12 @@ El MVP utilizará:
 - Supabase como backend principal;
 - servicios externos mediante adaptadores;
 - jobs de IA almacenados en PostgreSQL;
-- un worker simple en Supabase Edge Functions.
+- un worker simple en Supabase Edge Functions;
+- scheduler de jobs mediante pg_cron (PostgreSQL).
 
 No utilizar microservicios durante el MVP.
 
-No utilizar Redis, BullMQ ni colas externas durante el MVP.
+No utilizar Redis, BullMQ, Kafka ni colas externas durante el MVP.
 
 ---
 
@@ -37,21 +38,24 @@ Next.js
 ↓
 Supabase
 ├── Auth
-├── PostgreSQL
+├── PostgreSQL (jobs + pg_cron)
 ├── Storage
-└── Edge Functions
+└── Edge Functions (worker)
 
 Servicios externos:
 
 Next.js
+↓
+pg_cron → process_jobs()
 ↓
 Supabase Edge Functions (worker de IA)
 ↓
 ImageGenerationService
 ↓
 ProviderAdapter
-├── OpenAI Images API (inicial)
-└── FLUX (alternativa futura)
+├── OpenAIAdapter
+└── FluxAdapter
+(candidatos — decisión pendiente de validación)
 
 Otros:
 
@@ -59,7 +63,6 @@ Stripe
 Sentry
 PostHog
 Vercel
-Vercel Cron (trigger/retry de jobs)
 
 ---
 
@@ -133,7 +136,7 @@ Responsabilidad:
 - deployment;
 - jobs;
 - worker de IA (Edge Function);
-- scheduler (Vercel Cron).
+- scheduler (pg_cron).
 
 ---
 
@@ -152,10 +155,16 @@ UI
 ### Subir imagen
 
 UI
-→ validación
-→ StorageService
-→ Supabase Storage
+→ validación (backend)
+→ Supabase Storage SDK (subida directa desde el navegador)
+→ bucket privado original-images
 → Room record.
+
+Política de Storage por prefijo de ruta:
+
+{organization_id}/{property_id}/{image_id}
+
+RLS garantiza que un usuario solo pueda escribir en la carpeta de su organización.
 
 ---
 
@@ -174,11 +183,13 @@ Worker (Supabase Edge Function)
 → ProviderAdapter
 → AI Provider
 → result
-→ Storage
-→ generation succeeded
+→ Storage (staged-images)
+→ generation completed
 → UsageService.
 
-Vercel Cron invoca al worker para procesar jobs pendientes y reintentar jobs fallidos recuperables.
+pg_cron ejecuta process_jobs() periódicamente.
+
+process_jobs() selecciona jobs pendientes e invoca la Edge Function del worker (pg_net).
 
 ---
 
@@ -186,24 +197,51 @@ Vercel Cron invoca al worker para procesar jobs pendientes y reintentar jobs fal
 
 Una generación es un job.
 
-El job vive en la tabla de generaciones (PostgreSQL).
+La cola de jobs vive en la tabla de generaciones (PostgreSQL).
 
-Un worker implementado como Supabase Edge Function procesa los jobs.
+El worker se implementa como Supabase Edge Function.
 
-Vercel Cron activa el worker periódicamente y reintenta jobs pendientes o fallidos recuperables.
+pg_cron (extensión de PostgreSQL) ejecuta la función process_jobs():
+
+- selecciona jobs pendientes;
+- invoca la Edge Function del worker (mediante pg_net);
+- la Edge Function reclamada jobs y los procesa.
 
 Estados:
 
 pending
 processing
-succeeded
+completed
 failed
+cancelled
+
+Transiciones válidas:
+
+pending
+→ processing
+→ completed
+
+pending
+→ processing
+→ failed
+
+pending
+→ cancelled
 
 El endpoint de creación no espera la generación.
 
 Debe devolver rápidamente el job.
 
 La UI consulta el estado mediante polling o mecanismo equivalente.
+
+Campos de protección del job:
+
+- locked_at: evita que otro proceso reclame el mismo job;
+- retry_count: reintentos limitados y configurables;
+- output determinista por job (la ruta de salida incluye el job_id);
+- idempotencia: un job solo se procesa una vez.
+
+Los reintentos no deben generar cargos duplicados.
 
 ---
 
@@ -225,18 +263,33 @@ El worker debe:
 La reclamación de un job debe ser atómica:
 
 UPDATE generations
-SET status = 'processing'
+SET status = 'processing',
+    locked_at = now()
 WHERE id = :jobId
 AND status = 'pending'
 RETURNING *;
 
 Un UPDATE con condición de estado garantiza que solo un worker reclamará cada job.
 
-Debe existir un límite de concurrencia por organización:
+### Rate limiting (PostgreSQL)
 
-número máximo de generaciones en processing simultáneamente.
+El rate limiting se implementa en PostgreSQL, sin Redis.
 
-Si se supera, el job permanece pending para la siguiente pasada.
+Límites a nivel de organización:
+
+- generaciones simultáneas en processing;
+- volumen de generaciones por período;
+- consumo de créditos.
+
+Los valores concretos deben mantenerse configurables.
+
+No hardcodear límites de negocio en múltiples partes del código.
+
+### Límite de concurrencia
+
+Debe existir un límite máximo de jobs en processing por organización.
+
+Si se supera, el job permanece pending para la siguiente pasada de process_jobs().
 
 ---
 
@@ -281,8 +334,10 @@ ProviderAdapter
 Ejemplo:
 
 ImageGenerationService
-→ OpenAIAdapter (inicial)
-→ FluxAdapter (futuro)
+→ OpenAIAdapter
+→ FluxAdapter
+
+Candidatos; la decisión de proveedor principal queda pendiente de validación con credenciales reales.
 
 ---
 
@@ -295,7 +350,7 @@ No introducir:
 - tRPC;
 - monorepo;
 - sistemas de plugins;
-- colas externas (Redis, BullMQ, u otras);
+- colas externas (Redis, BullMQ, Kafka, u otras);
 - Kubernetes;
 - arquitectura distribuida;
 

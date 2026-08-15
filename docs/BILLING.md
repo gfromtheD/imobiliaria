@@ -85,21 +85,37 @@ Antes de crear una generación:
 
 No iniciar generación si no existe entitlement válido.
 
-El decremento de créditos debe ser atómico:
+### Reserva transaccional de créditos
 
-UPDATE subscriptions
-SET credits_used = credits_used + 1
-WHERE organization_id = :org
-AND credits_used < credits_limit
-RETURNING *;
+El consumo es transaccional y atómico:
 
-Si la actualización no devuelve fila, la organización no tiene crédito disponible.
+1. bloquear la fila de créditos (SELECT ... FOR UPDATE);
+2. comprobar disponibilidad (credits_available);
+3. reservar el crédito (credits_available → credits_reserved);
+4. crear el job;
+5. confirmar transacción (COMMIT).
+
+Si la generación termina correctamente:
+
+→ el crédito reservado queda consumido.
+
+Si falla por error del proveedor:
+
+→ devolver crédito (reserved → available).
+
+Si el usuario cancela antes del procesamiento:
+
+→ devolver crédito (reserved → available).
+
+Los retries nunca duplican el consumo:
+
+cada job reserva un único crédito.
 
 El cálculo del consumo nunca depende del cliente.
 
 ---
 
-## 6. Usage ledger
+## 7. Usage ledger
 
 Cada consumo genera una entrada.
 
@@ -119,11 +135,21 @@ Si el proveedor falla:
 
 No cobrar crédito al cliente.
 
+Devolver el crédito reservado.
+
 Esto aplica tanto a créditos gratuitos como de pago.
 
 Registrar:
 
 provider_error
+
+Si el usuario cancela antes del procesamiento:
+
+devolver el crédito reservado.
+
+Registrar:
+
+cancelled
 
 Si una generación fue técnicamente exitosa y el usuario solicita regeneración:
 
@@ -131,7 +157,7 @@ la regeneración puede consumir crédito adicional según plan.
 
 ---
 
-## 8. Stripe
+## 9. Stripe
 
 Utilizar:
 
@@ -148,7 +174,7 @@ Eventos relevantes:
 
 ---
 
-## 9. Webhooks
+## 10. Webhooks
 
 Los webhooks deben:
 
