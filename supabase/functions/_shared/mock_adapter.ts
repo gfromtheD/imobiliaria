@@ -2,12 +2,24 @@
 // Fase 1: produces a real PNG artifact (deterministic per style) that the worker
 // uploads to staged-images, so the full pipeline (job -> provider -> storage -> result)
 // is exercised end to end. Never used to call OpenAI/FLUX.
+// Compatibilidad dual (Fase 0 + Fase 1): detecta el fallo simulado tanto en
+// `parameters.mock_fail` (Fase 1) como en `fail` directo del payload (Fase 0,
+// contrato documentado en docs/PHASE_0_VALIDATION.md), y devuelve también los
+// campos legacy (provider, artifact, simulated, output_path, ...) que el harness
+// de Fase 0 verifica además del artefacto PNG de Fase 1.
 
 export interface MockImageArtifact {
   mime: "image/png";
   base64: string;
   width: number;
   height: number;
+  provider: "mock";
+  artifact: string;
+  simulated: true;
+  room_type: string | null;
+  style: string | null;
+  output_path: string;
+  generated_at: string;
 }
 
 const CRC_TABLE = (() => {
@@ -141,16 +153,17 @@ async function renderMockPng(style: string, roomType: string): Promise<MockImage
 
 export class MockAdapter {
   /**
-   * Simulates provider work. If parameters.mock_fail === true and this is the
-   * first attempt, throws a controlled transient provider error; a retry succeeds.
-   * Otherwise returns a deterministic PNG artifact after a short delay.
+   * Simulates provider work. Fails on the first attempt when the job asks for it:
+   * `parameters.mock_fail === true` (Fase 1) or `fail === true` in the payload
+   * (Fase 0 legacy contract). A retry succeeds. On success returns a deterministic
+   * PNG artifact (Fase 1) plus the legacy mock fields (Fase 0).
    */
   async generate(
-    params: { room_type?: string; style?: string; parameters?: Record<string, unknown> },
+    params: { room_type?: string; style?: string; parameters?: Record<string, unknown>; fail?: boolean },
     context: { attempt?: number } = {},
   ): Promise<MockImageArtifact> {
     const p = params.parameters ?? {};
-    const fail = p.mock_fail === true && (context.attempt ?? 1) === 1;
+    const fail = ((p.mock_fail === true) || (params.fail === true)) && (context.attempt ?? 1) === 1;
 
     if (fail) {
       const err = new Error("simulated provider failure") as Error & { code?: string; retryable?: boolean };
@@ -161,6 +174,18 @@ export class MockAdapter {
 
     await new Promise((resolve) => setTimeout(resolve, 400));
 
-    return await renderMockPng(params.style ?? "modern", params.room_type ?? "otra");
+    const png = await renderMockPng(params.style ?? "modern", params.room_type ?? "otra");
+    const hash = fnv1a(`${params.style ?? "modern"}|${params.room_type ?? "otra"}`).toString(16);
+
+    return {
+      ...png,
+      provider: "mock",
+      artifact: `mock-png-${hash}`,
+      simulated: true,
+      room_type: params.room_type ?? null,
+      style: params.style ?? null,
+      output_path: `staged-images/mock/${hash}.png`,
+      generated_at: new Date().toISOString(),
+    };
   }
 }
