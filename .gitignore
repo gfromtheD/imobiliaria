@@ -1,7 +1,12 @@
 # Dependencies
 node_modules/
 .pnp/
-.pnp.js
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Environment variables
 .env
@@ -24,6 +29,16 @@ test-results/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.pnpm-debug.log*
+
+# Misc
+*.pem
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
 
 # OS
 .DS_Store

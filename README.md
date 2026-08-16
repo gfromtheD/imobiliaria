@@ -157,6 +157,19 @@ Install dependencies:
 
 pnpm install
 
+Run the local Supabase stack (backend):
+
+cd supabase
+supabase start
+supabase db reset (applies migrations + seed)
+
+Configure frontend environment variables:
+
+Copy the local anon key and API URL from supabase status -o env into .env.local:
+
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase status>
+
 Run development server:
 
 pnpm dev
@@ -192,6 +205,25 @@ Use:
 .env.local
 
 Production variables must be configured through deployment infrastructure.
+
+Only public variables are available to the frontend (NEXT_PUBLIC_ prefix); the Supabase anon key is a public client key and never grants elevated access (RLS enforces all authorization).
+
+---
+
+## Frontend structure
+
+App Router with two route groups:
+
+- (auth): /login, /register, /forgot-password;
+- (app): protected application routes (organization → properties → rooms → generations).
+
+Session handling lives in proxy.ts (Next.js proxy middleware) and lib/supabase.
+
+Server-side data access is centralized in /services (server-only); UI components never call Supabase directly and contain no business logic.
+
+Types for the Supabase contracts are generated from the local database:
+
+supabase gen types typescript --local > lib/types/database.ts
 
 ---
 
