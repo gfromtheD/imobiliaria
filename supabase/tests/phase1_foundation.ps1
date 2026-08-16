@@ -177,6 +177,7 @@ $n2 = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
 $deadline = [DateTime]::UtcNow.AddSeconds(20)
 do {
   Start-Sleep -Milliseconds 500
+  $null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
   $gs = Get-Table $userA.Token "generations" "select=id,status,output_image_path&id=in.($($g2.Body.id),$($g3.Body.id))"
   $done = @($gs.Body | Where-Object { $_.status -eq "completed" }).Count
 } while ($done -lt 2 -and [DateTime]::UtcNow -lt $deadline)
@@ -281,8 +282,115 @@ do {
 } while ($ghr2.Body[0].status -ne "completed" -and [DateTime]::UtcNow -lt $deadline)
 AssertEq $ghr2.Body[0].status "completed" "job recuperado y completado"
 
-# ---------------------------------------------------------------- 12. cron end-to-end
-Section "12. Cron pg_cron -> pg_net -> edge function"
+# ---------------------------------------------------------------- 12. users update hardening
+Section "12. Policy users: update self (auditoría)"
+$meA = Get-Table $userA.Token "users" "select=id,email,role,organization_id"
+AssertEq $meA.Status 200 "A lee su propia fila de users"
+$myRow = @($meA.Body)[0]
+$roleBefore = $myRow.role
+$upEmail = Invoke-Api "PATCH" "/rest/v1/users?id=eq.$($myRow.id)" $userA.Token (@{ email = "alice.$RunId.new@test.local" } | ConvertTo-Json -Compress)
+Assert (($upEmail.Status -eq 200) -or $upEmail.Status -ge 400) "A actualiza su email (permitido; PATCH $($upEmail.Status))"
+$emailDb = Sql "select email from public.users where id = '$($myRow.id)';"
+Assert (($upEmail.Status -eq 200) -eq ($emailDb.Trim() -eq "alice.$RunId.new@test.local")) "email coherente en DB (PATCH=$($upEmail.Status) db=$($emailDb.Trim()))"
+$upRole = Invoke-Api "PATCH" "/rest/v1/users?id=eq.$($myRow.id)" $userA.Token (@{ role = "owner" } | ConvertTo-Json -Compress)
+Assert ($upRole.Status -ge 400) "A no puede modificar su role (PATCH $($upRole.Status))"
+$upOrg = Invoke-Api "PATCH" "/rest/v1/users?id=eq.$($myRow.id)" $userA.Token (@{ organization_id = $orgB.id } | ConvertTo-Json -Compress)
+Assert ($upOrg.Status -ge 400) "A no puede modificar su organization_id (PATCH $($upOrg.Status))"
+$roleAfter = Sql "select role from public.users where id = '$($myRow.id)';"
+AssertEq $roleAfter.Trim() $roleBefore "role intacto en DB tras los intentos"
+$upEmailB = Invoke-Api "PATCH" "/rest/v1/users?id=eq.$($myRow.id)" $userB.Token (@{ email = "hack@test.local" } | ConvertTo-Json -Compress)
+Assert (($upEmailB.Status -ge 400) -or ($upEmailB.Status -eq 200 -and $null -eq $upEmailB.Body)) "B no puede editar la fila de A (PATCH $($upEmailB.Status))"
+$emailDb2 = Sql "select email from public.users where id = '$($myRow.id)';"
+Assert ($emailDb2.Trim() -ne "hack@test.local") "email de A intacto tras el intento de B"
+
+# ---------------------------------------------------------------- 13. gaps de cobertura (auditoría)
+Section "13. Cobertura de gaps identificados en auditoría"
+# 13.1 image_required: habitación sin imagen (en propiedad nueva: propA ya tiene 20 imágenes)
+$pNoImg = Post-Table $userA.Token "properties" @{ organization_id = $orgA.id; title = "Sin Imagen" }
+AssertEq $pNoImg.Status 201 "A crea propiedad para gap 13.1"
+$roomNoImg = (Invoke-Rpc $userA.Token "create_room" @{ p_property_id = $pNoImg.Body.id; p_room_type = "cocina"; p_file_name = "sin.jpg" }).Body
+$gNoImg = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomNoImg.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
+Assert ($gNoImg.Raw -match "image_required") "create_generation sin imagen -> image_required"
+# 13.2 create_generation con habitación ajena
+$gForB = Invoke-Rpc $userB.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
+Assert ($gForB.Raw -match "room_not_found") "create_generation sobre habitación ajena -> room_not_found"
+# 13.3 B no lee datos de A por GET directo
+$genB = Get-Table $userB.Token "generations" "select=id&id=eq.$($g1.Body.id)"
+AssertEq @($genB.Body).Count 0 "B no lee generations de A por id"
+$subB = Get-Table $userB.Token "subscriptions" "select=id&organization_id=eq.$($orgA.id)"
+AssertEq @($subB.Body).Count 0 "B no lee subscriptions de A"
+$ledB = Get-Table $userB.Token "usage_ledger" "select=id&organization_id=eq.$($orgA.id)"
+AssertEq @($ledB.Body).Count 0 "B no lee usage_ledger de A"
+# 13.4 delete_property: caso de éxito (solo se probaba el denied)
+$pDel = Post-Table $userA.Token "properties" @{ organization_id = $orgA.id; title = "Para Borrar" }
+AssertEq $pDel.Status 201 "A crea propiedad para borrar"
+$delOk = Invoke-Rpc $userA.Token "delete_property" @{ p_property_id = $pDel.Body.id }
+AssertEq $delOk.Status 200 "delete_property ok"
+AssertEq $delOk.Body $true "delete_property devuelve true"
+$pDel2 = Get-Table $userA.Token "properties" "select=id&id=eq.$($pDel.Body.id)"
+AssertEq @($pDel2.Body).Count 0 "propiedad borrada no aparece"
+# 13.5 retry_generation manual (RPC; el retry automático ya se cubre en 8/11)
+$reset5 = Invoke-Api "PATCH" "/rest/v1/subscriptions?organization_id=eq.$($orgA.id)" $service (@{ credits_available = 3; credits_reserved = 0 } | ConvertTo-Json -Compress)
+$gr = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{ mock_fail = $true } }
+$null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
+$deadline = [DateTime]::UtcNow.AddSeconds(30)
+do {
+  Start-Sleep -Milliseconds 500
+  $grr = Get-Table $userA.Token "generations" "select=status,retry_count&id=eq.$($gr.Body.id)"
+} while ($grr.Body[0].status -ne "failed" -and [DateTime]::UtcNow -lt $deadline)
+AssertEq $grr.Body[0].status "failed" "g_retry falla en intento 1 (preparación)"
+$retryMan = Invoke-Rpc $service "retry_generation" @{ p_generation_id = $gr.Body.id }
+AssertEq $retryMan.Status 200 "retry_generation manual (service) ok"
+AssertEq $retryMan.Body.status "pending" "retry manual reabre a pending"
+$null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
+$deadline = [DateTime]::UtcNow.AddSeconds(30)
+do {
+  Start-Sleep -Milliseconds 500
+  $grr2 = Get-Table $userA.Token "generations" "select=status,retry_count,output_image_path&id=eq.$($gr.Body.id)"
+} while ($grr2.Body[0].status -ne "completed" -and [DateTime]::UtcNow -lt $deadline)
+AssertEq $grr2.Body[0].status "completed" "job reabierto manualmente se completa"
+AssertEq ([int]$grr2.Body[0].retry_count) 2 "retry_count 2 tras retry manual"
+# 13.6 storage: verificar bytes PNG del staged (antes solo status 200)
+$tmpStaged = Join-Path $env:TEMP "ph1_staged_$RunId.png"
+$tokenA = "$($userA.Token)"
+$dlA = Invoke-WebRequest -Method Get -Uri "$Base/storage/v1/object/staged-images/$($grr2.Body[0].output_image_path)" -Headers @{ apikey = $tokenA; Authorization = "Bearer $tokenA" } -OutFile $tmpStaged -SkipHttpErrorCheck
+$pngBytes = [System.IO.File]::ReadAllBytes($tmpStaged)
+$magic = ($pngBytes[0] -eq 0x89 -and $pngBytes[1] -eq 0x50 -and $pngBytes[2] -eq 0x4e -and $pngBytes[3] -eq 0x47)
+Assert ($pngBytes.Length -gt 100 -and $magic) "staged es un PNG real ($($pngBytes.Length) bytes)"
+# 13.7 fail_generation no-retryable: terminal + refund + retry_count=max
+$gter = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
+$null = Invoke-Rpc $service "claim_generation" @{ p_generation_id = $gter.Body.id }
+$subBefore = Get-Table $userA.Token "subscriptions" "select=credits_available,credits_reserved"
+$failTerm = Invoke-Rpc $service "fail_generation" @{ p_generation_id = $gter.Body.id; p_error_code = "terminal_error"; p_error_message = "no retryable"; p_retryable = $false }
+AssertEq $failTerm.Status 200 "fail_generation no-retryable ok"
+$gterRc = Sql "select retry_count from public.generations where id = '$($gter.Body.id)';"
+AssertEq $gterRc.Trim() "3" "retry_count forzado a max_attempts en DB"
+$subAfter = Get-Table $userA.Token "subscriptions" "select=credits_available,credits_reserved"
+AssertEq ([int]$subAfter.Body[0].credits_reserved) ([int]$subBefore.Body[0].credits_reserved - 1) "refund: reserva liberada tras fallo terminal"
+AssertEq ([int]$subAfter.Body[0].credits_available) ([int]$subBefore.Body[0].credits_available + 1) "refund: crédito devuelto"
+$null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
+$gter2 = Get-Table $userA.Token "generations" "select=status&id=eq.$($gter.Body.id)"
+AssertEq $gter2.Body[0].status "failed" "scheduler no reabre job terminal"
+# 13.8 refund del recovery con retry_count >= max
+$grec = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
+$null = Invoke-Rpc $service "claim_generation" @{ p_generation_id = $grec.Body.id }
+$null = Sql "update public.generations set retry_count = 3, locked_at = now() - interval '11 minutes' where id = '$($grec.Body.id)';"
+$subRecBefore = Get-Table $userA.Token "subscriptions" "select=credits_available,credits_reserved"
+$null = Invoke-Rpc $service "process_generation_jobs" @{ p_limit = 10 }
+$subRecAfter = Get-Table $userA.Token "subscriptions" "select=credits_available,credits_reserved"
+AssertEq ([int]$subRecAfter.Body[0].credits_reserved) ([int]$subRecBefore.Body[0].credits_reserved - 1) "recovery con retry_count=max: reserva liberada"
+AssertEq ([int]$subRecAfter.Body[0].credits_available) ([int]$subRecBefore.Body[0].credits_available + 1) "recovery con retry_count=max: crédito devuelto"
+# 13.9 cancel sobre job no-pending (processing) -> null
+$gcNoPending = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
+$null = Invoke-Rpc $service "claim_generation" @{ p_generation_id = $gcNoPending.Body.id }
+$cxNoPending = Invoke-Rpc $userA.Token "cancel_generation" @{ p_generation_id = $gcNoPending.Body.id }
+AssertNullRow $cxNoPending "cancel sobre processing devuelve null"
+$null = Invoke-Rpc $service "complete_generation" @{ p_generation_id = $gcNoPending.Body.id; p_output_path = "x.png"; p_provider_job_id = "limpieza" }
+$gcNoPending2 = Get-Table $userA.Token "generations" "select=status&id=eq.$($gcNoPending.Body.id)"
+AssertEq $gcNoPending2.Body[0].status "completed" "job de cancel-no-op completado para limpieza"
+
+# ---------------------------------------------------------------- 14. cron end-to-end
+Section "14. Cron pg_cron -> pg_net -> edge function"
 $reset4 = Invoke-Api "PATCH" "/rest/v1/subscriptions?organization_id=eq.$($orgA.id)" $service (@{ credits_available = 1; credits_reserved = 0 } | ConvertTo-Json -Compress)
 $gcr = Invoke-Rpc $userA.Token "create_generation" @{ p_room_id = $roomA.room_id; p_style_id = $styleModern.id; p_parameters = @{} }
 $null = Sql "select cron.unschedule('process-generation-jobs');"
@@ -301,9 +409,9 @@ Section "0b. Restauración"
 $null = Invoke-Api "PATCH" "/rest/v1/app_config?key=eq.retry_interval" $service (@{ value = "2 minutes" } | ConvertTo-Json -Compress)
 $null = Invoke-Api "PATCH" "/rest/v1/app_config?key=eq.anon_key" $service (@{ value = $anon } | ConvertTo-Json -Compress)
 
-# ---------------------------------------------------------------- 13. regresión fase 0
+# ---------------------------------------------------------------- 15. regresión fase 0
 if (-not $SkipRegression) {
-  Section "13. Regresión Fase 0"
+  Section "15. Regresión Fase 0"
   & (Join-Path $PSScriptRoot "phase0_validation.ps1")
   Assert ($LASTEXITCODE -eq 0) "harness Fase 0 sigue verde"
 }
