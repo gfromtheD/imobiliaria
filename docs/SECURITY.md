@@ -62,6 +62,18 @@ Incluso si conoce:
 - nombre;
 - ID de propiedad.
 
+### Columnas sensibles (2026-08-16)
+
+RLS no puede restringir columnas individuales; se usan grants de columna.
+
+En `public.users` el rol `authenticated` solo puede `UPDATE` su propio `email`:
+
+- `revoke update on public.users from authenticated;`
+- `grant update (email) on public.users to authenticated;`
+- policy `users: update self` con `with check (id = auth.uid() and organization_id = public.current_org_id())`.
+
+`role` y `organization_id` no son modificables por el usuario (ni escalada de rol, ni org-hopping).
+
 ---
 
 ## 6. Authorization
@@ -140,6 +152,15 @@ Acceso mediante signed URLs:
 Nunca exponer service_role al navegador.
 
 No exponer rutas internas de Storage innecesariamente.
+
+### Service role del Edge Worker (2026-08-16)
+
+El Edge Worker `process-generation` usa `SUPABASE_SERVICE_ROLE_KEY` en producción:
+
+- se inyecta como **secret del runtime de la función** (`supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...` o Dashboard → Edge Functions → Secrets);
+- se lee con `Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")` en la función (ya implementado);
+- el fallback a passthrough del header entrante existe solo para desarrollo local;
+- nunca se commitea ni se expone al navegador.
 
 ---
 

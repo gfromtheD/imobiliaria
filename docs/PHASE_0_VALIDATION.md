@@ -143,4 +143,25 @@ El pipeline asíncrono **funciona end-to-end en el entorno local** exactamente c
 - **Condición 2 cumplida:** el esquema del producto (properties, rooms, generations, subscriptions, usage_ledger) sustituyó a `image_jobs`/`phase0_config`, preservando claim atómico (`WHERE status='pending'` + `locked_at`), guardas de estado, `status_history` y trazabilidad. El esquema de Fase 0 se mantiene como artefacto de validación.
 - **Condiciones 3 y 4 cumplidas:** reintentos con límite (`retry_count`, `max_retries` = 3, `retry_interval`) y reserva/liberación atómica de créditos (`claim_generation` reserva, `fail_generation`/`cancel_generation` devuelven, solo en fallo definitivo).
 - **Condición 1 pendiente (producción):** el worker local se autentica con el JWT anon; en producción se configurará `service_role` vía variable de entorno.
-- **Compatibilidad del MockAdapter:** el adapter ahora devuelve el artefacto PNG de Fase 1 **y** los campos legacy que este documento verifica (`provider: "mock"`, `artifact`, `simulated`, `output_path`, ...), y detecta el fallo simulado tanto con `fail: true` en el payload (contrato de Fase 0, líneas 34/45/58) como con `parameters.mock_fail` (Fase 1). El harness de Fase 0 se ejecuta como regresión dentro de `supabase/tests/phase1_foundation.ps1` (sección 13) y permanece 100 % verde.
+- **Compatibilidad del MockAdapter:** el adapter ahora devuelve el artefacto PNG de Fase 1 **y** los campos legacy que este documento verifica (`provider: "mock"`, `artifact`, `simulated`, `output_path`, ...), y detecta el fallo simulado tanto con `fail: true` en el payload (contrato de Fase 0, líneas 34/45/58) como con `parameters.mock_fail` (Fase 1). El harness de Fase 0 se ejecuta como regresión dentro de `supabase/tests/phase1_foundation.ps1` (sección 15) y permanece 100 % verde.
+
+## 13. Service role del worker en producción (2026-08-16)
+
+**Estrategia:** el Edge Worker `process-generation` se autentica contra PostgREST con el **service role key de Supabase**, leído exclusivamente de una variable de entorno del runtime de la función (`Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")`). El código ya implementa la preferencia: si el env var existe, el worker firma sus llamadas con él; si no existe (entorno local sin secret configurado), hace passthrough del header entrante — este fallback **solo** existe para desarrollo y debe quedar desactivado en producción manteniendo el secret configurado.
+
+**Dónde se configura en el despliegue real (sin inventar infraestructura):**
+
+1. **Secret de la función** — en el proyecto Supabase gestionado, el service role key se inyecta al runtime de Edge Functions sin commitear nada:
+   - Dashboard → Edge Functions → `process-generation` → Secrets (clave `SUPABASE_SERVICE_ROLE_KEY`), o
+   - CLI: `supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<valor>` (el valor se obtiene de Project Settings → API; nunca se escribe en archivos del repo).
+2. **Config del pipeline en la base de datos** — `public.app_config` debe apuntar al proyecto desplegado (la migración siembra valores locales `http://kong:8000`):
+   - `edge_function_url` → `https://<project-ref>.supabase.co/functions/v1/process-generation`
+   - `api_url` → `https://<project-ref>.supabase.co`
+   - `anon_key` → la anon key pública del proyecto (pública por diseño; necesaria para que el scheduler `process_generation_jobs()` autentique la invocación de la función vía pg_net; la función sustituye esa auth por el service role).
+3. **Revisión de seguridad pre-despliegue** — confirmar que `SUPABASE_SERVICE_ROLE_KEY` está presente en el runtime (si faltara, el worker usaría el passthrough y el job fallaría con `missing_auth` o escribiría con permisos insuficientes), y que el secret no aparece en logs ni en el repositorio.
+
+**Por qué service role y no anon:** las RPC del pipeline (`claim_generation`, `complete_generation`, `fail_generation`, `retry_generation`, `process_generation_jobs`) solo están concedidas a `service_role` en producción; el anon key solo transporta la invocación de la función. El worker es la única entidad que puede mutar el estado de los jobs, y sus llamadas no pasan por RLS de tenant (confía en que el `generation_id` lo emitió el propio scheduler sobre filas de la org correcta).
+
+## 14. Endurecimiento de la policy users (2026-08-16)
+
+Migración `20260816000000_users_update_hardening.sql`: los usuarios autenticados conservan **UPDATE solo sobre su propio `email`** (grant de columna; RLS no permite restringir columnas), y la policy `users: update self` exige además `organization_id = current_org_id()` en la fila resultante. Quedan bloqueados `role` y `organization_id` (y cualquier otra columna). Verificado por el harness (sección 12) y por la auditoría independiente (PATCH de `role`/`organization_id` → 403; email propio → 200).
