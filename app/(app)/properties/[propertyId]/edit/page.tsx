@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 export default async function EditPropertyPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ propertyId: string }>;
 }) {
-  const { id } = await params;
-  const property = await getProperty(id);
+  const { propertyId } = await params;
+  const property = await getProperty(propertyId);
 
   if (!property) {
     notFound();

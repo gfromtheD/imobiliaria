@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { getProperty } from "@/services/properties";
+import { listRooms } from "@/services/rooms";
 
 export const metadata: Metadata = {
   title: "Propiedad",
@@ -21,14 +21,16 @@ export const metadata: Metadata = {
 export default async function PropertyDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ propertyId: string }>;
 }) {
-  const { id } = await params;
-  const property = await getProperty(id);
+  const { propertyId } = await params;
+  const property = await getProperty(propertyId);
 
   if (!property) {
     notFound();
   }
+
+  const rooms = await listRooms(propertyId);
 
   return (
     <div className="space-y-6">
@@ -68,17 +70,19 @@ export default async function PropertyDetailPage({
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Habitaciones</CardTitle>
-          <CardDescription>
-            Sube fotografías de las habitaciones vacías y decóralas con IA.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle>Habitaciones</CardTitle>
+            <CardDescription>
+              {rooms.length === 0
+                ? "Sube fotografías de las habitaciones vacías y decóralas con IA."
+                : `${rooms.length} habitación${rooms.length === 1 ? "" : "es"} en esta propiedad.`}
+            </CardDescription>
+          </div>
+          <Link href={`/properties/${propertyId}/rooms`}>
+            <Button variant="outline">Ver habitaciones</Button>
+          </Link>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            La gestión de habitaciones llegará en la siguiente fase.
-          </p>
-        </CardContent>
       </Card>
     </div>
   );
