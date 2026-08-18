@@ -52,3 +52,10 @@ Thumbs.db
 # Supabase local
 supabase/.branches/
 supabase/.temp/
+
+# Graphify - keep graph artifacts, ignore machine-local state
+graphify-out/*
+!graphify-out/graph.json
+!graphify-out/graph.html
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/manifest.json
