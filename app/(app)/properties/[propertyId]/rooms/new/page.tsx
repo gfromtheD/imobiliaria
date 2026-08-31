@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 export default async function NewRoomPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ propertyId: string }>;
 }) {
-  const { id } = await params;
-  const property = await getProperty(id);
+  const { propertyId } = await params;
+  const property = await getProperty(propertyId);
 
   if (!property) {
     notFound();
@@ -25,7 +25,7 @@ export default async function NewRoomPage({
     <div className="max-w-2xl space-y-6">
       <div>
         <Link
-          href={`/properties/${id}/rooms`}
+          href={`/properties/${propertyId}/rooms`}
           className="text-sm text-muted-foreground hover:underline"
         >
           ← {property.title} · Habitaciones
@@ -37,7 +37,7 @@ export default async function NewRoomPage({
           Registra la estancia y sube su fotografía vacía.
         </p>
       </div>
-      <RoomUploadForm propertyId={id} />
+      <RoomUploadForm propertyId={propertyId} />
     </div>
   );
 }

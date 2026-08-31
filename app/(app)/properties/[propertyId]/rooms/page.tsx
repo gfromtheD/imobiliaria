@@ -15,23 +15,23 @@ export const metadata: Metadata = {
 export default async function RoomsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ propertyId: string }>;
 }) {
-  const { id } = await params;
-  const property = await getProperty(id);
+  const { propertyId } = await params;
+  const property = await getProperty(propertyId);
 
   if (!property) {
     notFound();
   }
 
-  const rooms = await listRooms(id);
+  const rooms = await listRooms(propertyId);
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link
-            href={`/properties/${id}`}
+            href={`/properties/${propertyId}`}
             className="text-sm text-muted-foreground hover:underline"
           >
             ← {property.title}
@@ -43,7 +43,7 @@ export default async function RoomsPage({
             Sube las fotografías de las habitaciones vacías de esta propiedad.
           </p>
         </div>
-        <Link href={`/properties/${id}/rooms/new`}>
+        <Link href={`/properties/${propertyId}/rooms/new`}>
           <Button>Añadir habitación</Button>
         </Link>
       </div>
@@ -53,7 +53,7 @@ export default async function RoomsPage({
           title="Aún no hay habitaciones"
           description="Añade la primera habitación con su fotografía para poder decorarla con IA."
           action={
-            <Link href={`/properties/${id}/rooms/new`}>
+            <Link href={`/properties/${propertyId}/rooms/new`}>
               <Button>Añadir habitación</Button>
             </Link>
           }
@@ -64,7 +64,7 @@ export default async function RoomsPage({
             <RoomCard
               key={room.id}
               id={room.id}
-              propertyId={id}
+              propertyId={propertyId}
               roomType={room.room_type}
               hasImage={room.original_image_path !== null}
               createdAt={room.created_at}
