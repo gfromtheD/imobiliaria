@@ -61,11 +61,20 @@ export const GENERATION_STATUSES = [
 export type GenerationStatus = (typeof GENERATION_STATUSES)[number];
 
 export const GENERATION_STATUS_LABELS: Record<GenerationStatus, string> = {
-  pending: "Pendiente",
-  processing: "Procesando",
+  pending: "En cola",
+  processing: "Generando",
   completed: "Completada",
   failed: "Fallida",
   cancelled: "Cancelada",
+};
+
+export const GENERATION_STATUS_DESCRIPTIONS: Record<GenerationStatus, string> = {
+  pending: "Esperando al proveedor de imágenes.",
+  processing: "El proveedor está decorando la imagen.",
+  completed: "Imagen decorada lista para descargar.",
+  failed:
+    "La generación falló. Si hay intentos disponibles se reintentará automáticamente.",
+  cancelled: "Cancelada; el crédito se devolvió.",
 };
 
 export const PROPERTY_STATUSES = ["active", "archived"] as const;

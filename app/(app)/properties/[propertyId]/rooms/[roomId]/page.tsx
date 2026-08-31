@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { GenerationsSection } from "@/components/generations/generations-section";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,6 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ROOM_TYPE_LABELS, type RoomType } from "@/lib/domain";
+import {
+  getSubscription,
+  getStagedImageUrl,
+  listGenerations,
+  listStyles,
+} from "@/services/generations";
 import { getRoom, getRoomImageUrl } from "@/services/rooms";
 
 export const metadata: Metadata = {
@@ -30,6 +37,28 @@ export default async function RoomDetailPage({
   }
 
   const imageUrl = await getRoomImageUrl(room.id);
+
+  const [styles, subscription, generations] = await Promise.all([
+    listStyles(),
+    getSubscription(),
+    listGenerations(roomId),
+  ]);
+
+  const generationViews = await Promise.all(
+    generations.map(async (generation) => ({
+      id: generation.id,
+      styleId: generation.style_id,
+      status: generation.status,
+      outputImageUrl:
+        generation.status === "completed" && generation.output_image_path
+          ? await getStagedImageUrl(generation.output_image_path)
+          : null,
+      errorMessage: generation.error_message,
+      retryCount: generation.retry_count,
+      createdAt: generation.created_at,
+      completedAt: generation.completed_at,
+    })),
+  );
 
   return (
     <div className="space-y-6">
@@ -89,15 +118,20 @@ export default async function RoomDetailPage({
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Decoración con IA</CardTitle>
-          <CardDescription>
-            Elige un estilo y genera una imagen decorada. Disponible en la
-            siguiente fase.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <GenerationsSection
+        roomId={room.id}
+        hasImage={room.original_image_path !== null}
+        styles={styles}
+        credits={
+          subscription
+            ? {
+                creditsAvailable: subscription.credits_available,
+                creditsReserved: subscription.credits_reserved,
+              }
+            : null
+        }
+        generations={generationViews}
+      />
     </div>
   );
 }
