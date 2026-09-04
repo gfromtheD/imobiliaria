@@ -161,16 +161,15 @@ la regeneración puede consumir crédito adicional según plan.
 
 Utilizar:
 
-- Stripe Checkout;
-- Stripe Billing;
-- Stripe Webhooks.
+- Stripe Checkout (compra de paquetes de créditos: Starter 10, Pro 50, Agency 100);
+- Stripe Billing (Customer Portal para facturas y métodos de pago);
+- Stripe Webhooks (endpoint seguro en `/api/webhooks/stripe`).
 
-Eventos relevantes:
+Eventos procesados:
 
-- invoice.paid;
-- invoice.payment_failed;
-- customer.subscription.updated;
-- customer.subscription.deleted.
+- `checkout.session.completed` (recarga atómica de créditos por metadata `organization_id` y `credits`);
+- `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`;
+- `invoice.paid`, `invoice.payment_failed`.
 
 ---
 
@@ -178,11 +177,11 @@ Eventos relevantes:
 
 Los webhooks deben:
 
-- validar firma;
-- ser idempotentes;
-- actualizar subscription;
-- no duplicar estados;
-- registrar errores.
+- validar la firma oficial `stripe-signature` contra `STRIPE_WEBHOOK_SECRET`;
+- ser idempotentes mediante registro en la tabla `stripe_events(id, event_type, processed_at)`;
+- actualizar `subscriptions` atómicamente mediante RPCs en base de datos (`apply_credit_purchase`, `sync_stripe_subscription`);
+- mantener el aislamiento multi-tenant sin exponer claves privadas a clientes;
+- no duplicar créditos ante entregas repetidas del mismo evento.
 
 ---
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { BillingSection } from "@/components/billing/billing-section";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getBillingData } from "@/services/billing";
 import { getCurrentOrganization, getCurrentUser } from "@/services/organization";
 
 export const metadata: Metadata = {
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   const organization = await getCurrentOrganization();
+  const { subscription, packages } = await getBillingData();
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -26,6 +29,15 @@ export default async function SettingsPage() {
           Tu cuenta y tu organización.
         </p>
       </div>
+
+      <BillingSection
+        creditsAvailable={subscription?.credits_available ?? organization?.creditsAvailable ?? 0}
+        creditsReserved={subscription?.credits_reserved ?? 0}
+        plan={subscription?.plan ?? organization?.subscriptionPlan ?? "free"}
+        status={subscription?.status ?? "active"}
+        hasCustomer={Boolean(subscription?.stripe_customer_id)}
+        packages={packages}
+      />
 
       <Card>
         <CardHeader>
