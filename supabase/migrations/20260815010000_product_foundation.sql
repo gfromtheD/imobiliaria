@@ -144,8 +144,8 @@ insert into public.styles (name, description, ai_preset) values
   ('Lujo', 'Acabados premium, materiales nobles y elegancia.', 'luxury');
 
 insert into public.app_config (key, value) values
-  ('edge_function_url', 'http://kong:8000/functions/v1/process-generation'),
-  ('api_url', 'http://kong:8000'),
+  ('edge_function_url', 'http://supabase_kong_imobiliaria:8000/functions/v1/process-generation'),
+  ('api_url', 'http://supabase_kong_imobiliaria:8000'),
   ('anon_key', ''),
   ('provider', 'mock'),
   ('max_concurrent', '3'),
@@ -671,9 +671,9 @@ declare
   v_count int := 0;
 begin
   select coalesce((select value from public.app_config where key = 'edge_function_url'),
-                  'http://kong:8000/functions/v1/process-generation') into v_url;
+                  'http://supabase_kong_imobiliaria:8000/functions/v1/process-generation') into v_url;
   select coalesce((select value from public.app_config where key = 'anon_key'), '') into v_anon;
-  select coalesce((select value from public.app_config where key = 'api_url'), 'http://kong:8000') into v_api;
+  select coalesce((select value from public.app_config where key = 'api_url'), 'http://supabase_kong_imobiliaria:8000') into v_api;
   select coalesce((select value::int from public.app_config where key = 'max_concurrent'), 3) into v_max_concurrent;
   select coalesce((select value::int from public.app_config where key = 'max_attempts'), 3) into v_max_attempts;
   select coalesce((select value::interval from public.app_config where key = 'job_timeout'), interval '10 minutes') into v_timeout;
