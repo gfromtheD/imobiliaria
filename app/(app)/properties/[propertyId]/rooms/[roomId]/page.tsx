@@ -121,6 +121,7 @@ export default async function RoomDetailPage({
       <GenerationsSection
         roomId={room.id}
         hasImage={room.original_image_path !== null}
+        originalImageUrl={imageUrl}
         styles={styles}
         credits={
           subscription

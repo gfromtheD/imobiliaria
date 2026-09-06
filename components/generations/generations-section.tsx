@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { BeforeAfterSlider } from "@/components/generations/before-after-slider";
 import { GenerationForm } from "@/components/generations/generation-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,12 +52,14 @@ function statusVariant(status: string) {
 export function GenerationsSection({
   roomId,
   hasImage,
+  originalImageUrl,
   styles,
   credits,
   generations,
 }: {
   roomId: string;
   hasImage: boolean;
+  originalImageUrl?: string | null;
   styles: { id: string; name: string; description: string | null }[];
   credits: { creditsAvailable: number; creditsReserved: number } | null;
   generations: GenerationViewItem[];
@@ -181,32 +184,50 @@ export function GenerationsSection({
                   )}
 
                   {generation.outputImageUrl && (
-                    <div className="space-y-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={generation.outputImageUrl}
-                        alt={`Decoración ${styleName(generation.styleId).toLowerCase()}`}
-                        className="w-full rounded-lg border object-cover"
-                      />
-                      <a
-                        href={generation.outputImageUrl}
-                        download={`generacion-${generation.id}.png`}
-                      >
-                        <Button variant="outline" size="sm">
-                          Descargar PNG
-                        </Button>
-                      </a>
+                    <div className="pt-2">
+                      {originalImageUrl ? (
+                        <BeforeAfterSlider
+                          originalUrl={originalImageUrl}
+                          stagedUrl={generation.outputImageUrl}
+                          title={`Estilo ${styleName(generation.styleId)}`}
+                        />
+                      ) : (
+                        <div className="space-y-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={generation.outputImageUrl}
+                            alt={`Decoración ${styleName(generation.styleId).toLowerCase()}`}
+                            className="w-full rounded-lg border object-cover"
+                          />
+                          <a
+                            href={generation.outputImageUrl}
+                            download={`generacion-${generation.id}.png`}
+                          >
+                            <Button variant="outline" size="sm">
+                              Descargar PNG
+                            </Button>
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {generation.status === "pending" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancel(generation.id)}
-                    >
-                      Cancelar
-                    </Button>
+                  {(generation.status === "pending" || generation.status === "processing") && (
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-2 text-xs text-primary font-medium bg-primary/10 px-2.5 py-1.5 rounded-md animate-pulse">
+                        <Sparkles className="size-3.5" />
+                        <span>Generando decoración con IA...</span>
+                      </div>
+                      {generation.status === "pending" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancel(generation.id)}
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>
