@@ -172,3 +172,105 @@ export async function cancelGenerationAction(generationId: string): Promise<{
 
   return { error: null };
 }
+
+export async function getOriginalImageUrlByPath(path: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from("original-images")
+    .createSignedUrl(path, 3600);
+
+  if (error) {
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
+export type AllGenerationsItem = {
+  id: string;
+  status: string;
+  styleId: string;
+  styleName: string;
+  roomId: string;
+  roomType: string;
+  propertyId: string;
+  propertyTitle: string;
+  outputImageUrl: string | null;
+  originalImageUrl: string | null;
+  errorMessage: string | null;
+  retryCount: number;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+export async function listAllGenerations(): Promise<AllGenerationsItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("generations")
+    .select(`
+      id,
+      style_id,
+      status,
+      output_image_path,
+      error_message,
+      retry_count,
+      created_at,
+      completed_at,
+      rooms!inner (
+        id,
+        room_type,
+        original_image_path,
+        properties!inner (
+          id,
+          title
+        )
+      ),
+      styles (
+        id,
+        name
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error("No se pudo cargar el historial global de generaciones.", {
+      cause: error,
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawRows = (data ?? []) as any[];
+
+  const items = await Promise.all(
+    rawRows.map(async (row) => {
+      let outputImageUrl: string | null = null;
+      if (row.status === "completed" && row.output_image_path) {
+        outputImageUrl = await getStagedImageUrl(row.output_image_path).catch(() => null);
+      }
+
+      let originalImageUrl: string | null = null;
+      if (row.rooms?.original_image_path) {
+        originalImageUrl = await getOriginalImageUrlByPath(row.rooms.original_image_path);
+      }
+
+      return {
+        id: row.id,
+        status: row.status,
+        styleId: row.style_id,
+        styleName: row.styles?.name ?? "Estilo",
+        roomId: row.rooms?.id ?? "",
+        roomType: row.rooms?.room_type ?? "Estancia",
+        propertyId: row.rooms?.properties?.id ?? "",
+        propertyTitle: row.rooms?.properties?.title ?? "Propiedad",
+        outputImageUrl,
+        originalImageUrl,
+        errorMessage: row.error_message,
+        retryCount: row.retry_count,
+        createdAt: row.created_at,
+        completedAt: row.completed_at,
+      };
+    }),
+  );
+
+  return items;
+}

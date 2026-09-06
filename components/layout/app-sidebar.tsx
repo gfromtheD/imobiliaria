@@ -18,6 +18,7 @@ export function AppSidebar({
       </div>
       <nav className="flex-1 space-y-1 p-3">
         <SidebarNavLink href="/properties">Propiedades</SidebarNavLink>
+        <SidebarNavLink href="/generations">Generaciones</SidebarNavLink>
         <SidebarNavLink href="/settings">Configuración</SidebarNavLink>
       </nav>
       <div className="border-t p-4">
