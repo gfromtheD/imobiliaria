@@ -51,10 +51,10 @@ export default async function RoomsPage({
       {rooms.length === 0 ? (
         <EmptyState
           title="Aún no hay habitaciones"
-          description="Añade la primera habitación con su fotografía para poder decorarla con IA."
+          description="Paso 2: Sube la primera fotografía de una estancia vacía (salón, dormitorio, cocina...) para desbloquear la decoración con IA."
           action={
             <Link href={`/properties/${propertyId}/rooms/new`}>
-              <Button>Añadir habitación</Button>
+              <Button size="lg">Subir primera habitación</Button>
             </Link>
           }
         />

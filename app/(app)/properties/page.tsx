@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { OnboardingGuide } from "@/components/onboarding/onboarding-guide";
 import { PropertyCard } from "@/components/properties/property-card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,15 +29,9 @@ export default async function PropertiesPage() {
       </div>
 
       {properties.length === 0 ? (
-        <EmptyState
-          title="Aún no tienes propiedades"
-          description="Crea tu primera propiedad para empezar a decorar sus habitaciones con IA."
-          action={
-            <Link href="/properties/new">
-              <Button>Crear propiedad</Button>
-            </Link>
-          }
-        />
+        <div className="space-y-6">
+          <OnboardingGuide />
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => (

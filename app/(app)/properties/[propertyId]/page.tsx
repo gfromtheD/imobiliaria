@@ -70,18 +70,26 @@ export default async function PropertyDetailPage({
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 space-y-0">
           <div>
             <CardTitle>Habitaciones</CardTitle>
             <CardDescription>
               {rooms.length === 0
-                ? "Sube fotografías de las habitaciones vacías y decóralas con IA."
+                ? "Siguiente paso: añade una habitación con su fotografía original para poder decorarla con IA."
                 : `${rooms.length} habitación${rooms.length === 1 ? "" : "es"} en esta propiedad.`}
             </CardDescription>
           </div>
-          <Link href={`/properties/${propertyId}/rooms`}>
-            <Button variant="outline">Ver habitaciones</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {rooms.length === 0 ? (
+              <Link href={`/properties/${propertyId}/rooms/new`}>
+                <Button>Añadir primera habitación</Button>
+              </Link>
+            ) : (
+              <Link href={`/properties/${propertyId}/rooms`}>
+                <Button variant="outline">Ver habitaciones</Button>
+              </Link>
+            )}
+          </div>
         </CardHeader>
       </Card>
     </div>
