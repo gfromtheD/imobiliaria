@@ -36,6 +36,14 @@ export async function POST(req: Request) {
 
         if (orgId && creditsStr) {
           const credits = parseInt(creditsStr, 10);
+          if (isNaN(credits) || credits <= 0) {
+            console.error("Créditos inválidos en metadata:", creditsStr);
+            return NextResponse.json(
+              { error: "Cantidad de créditos inválida." },
+              { status: 400 },
+            );
+          }
+
           const customerId =
             typeof session.customer === "string"
               ? session.customer
@@ -57,6 +65,43 @@ export async function POST(req: Request) {
               { error: "Error en la base de datos al recargar créditos." },
               { status: 500 },
             );
+          }
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id ?? null;
+
+        if (customerId) {
+          const invoiceSub = (
+            invoice as unknown as {
+              subscription?: string | { id: string } | null;
+            }
+          ).subscription;
+          const subId =
+            typeof invoiceSub === "string"
+              ? invoiceSub
+              : invoiceSub?.id ?? null;
+
+          // @ts-expect-error - RPC sync_stripe_subscription declared in DB migration
+          const { error } = await admin.rpc("sync_stripe_subscription", {
+            p_stripe_customer_id: customerId,
+            p_stripe_subscription_id: subId,
+            p_status: "past_due",
+            p_plan: "basic",
+            p_period_start: null,
+            p_period_end: null,
+            p_credits_to_add: 0,
+            p_event_id: event.id,
+          });
+
+          if (error) {
+            console.error("Error sincronizando invoice.payment_failed:", error);
           }
         }
         break;
