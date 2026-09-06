@@ -80,15 +80,14 @@ export default async function PropertyDetailPage({
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            {rooms.length === 0 ? (
+            {rooms.length === 0 && (
               <Link href={`/properties/${propertyId}/rooms/new`}>
                 <Button>Añadir primera habitación</Button>
               </Link>
-            ) : (
-              <Link href={`/properties/${propertyId}/rooms`}>
-                <Button variant="outline">Ver habitaciones</Button>
-              </Link>
             )}
+            <Link href={`/properties/${propertyId}/rooms`}>
+              <Button variant="outline">Ver habitaciones</Button>
+            </Link>
           </div>
         </CardHeader>
       </Card>

@@ -189,6 +189,7 @@ export function GenerationsSection({
                         <BeforeAfterSlider
                           originalUrl={originalImageUrl}
                           stagedUrl={generation.outputImageUrl}
+                          altStaged={`Decoración ${styleName(generation.styleId).toLowerCase()}`}
                           title={`Estilo ${styleName(generation.styleId)}`}
                         />
                       ) : (

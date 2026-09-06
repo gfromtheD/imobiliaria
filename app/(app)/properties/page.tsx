@@ -4,7 +4,6 @@ import Link from "next/link";
 import { OnboardingGuide } from "@/components/onboarding/onboarding-guide";
 import { PropertyCard } from "@/components/properties/property-card";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
 import { listProperties } from "@/services/properties";
 
 export const metadata: Metadata = {

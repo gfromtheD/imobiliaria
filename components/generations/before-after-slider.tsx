@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Maximize2,
-  Minimize2,
   Download,
   Eye,
   SlidersHorizontal,

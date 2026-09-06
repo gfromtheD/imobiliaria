@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useState } from "react";
 
+import { Sparkles } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -67,7 +69,8 @@ export function GenerationForm({
         <p className="text-sm text-destructive">{state.error ?? disabledReason}</p>
       )}
 
-      <Button type="submit" disabled={pending || disabled || !styleId}>
+      <Button type="submit" disabled={pending || disabled || !styleId} className="gap-2">
+        <Sparkles className={`size-4 ${pending ? "animate-spin" : ""}`} />
         {pending ? "Creando generación…" : "Generar decoración"}
       </Button>
     </form>
