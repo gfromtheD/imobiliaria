@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -8,6 +9,16 @@ export type AuthState = {
   error: string | null;
   success: string | null;
 };
+
+async function getAuthRedirectOrigin(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  }
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
+  const proto = headerList.get("x-forwarded-proto") ?? "http";
+  return `${proto}://${host}`;
+}
 
 export async function loginAction(
   _prevState: AuthState,
@@ -50,8 +61,15 @@ export async function registerAction(
     };
   }
 
+  const origin = await getAuthRedirectOrigin();
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback?next=/properties`,
+    },
+  });
 
   if (error) {
     return { error: error.message, success: null };
@@ -77,8 +95,11 @@ export async function resetPasswordAction(
     return { error: "Introduce tu email.", success: null };
   }
 
+  const origin = await getAuthRedirectOrigin();
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/settings`,
+  });
 
   if (error) {
     return { error: error.message, success: null };

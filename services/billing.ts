@@ -95,6 +95,9 @@ export async function createCreditCheckoutAction(packageId: string) {
       package_id: pkg.id,
       user_id: user.id,
     },
+    invoice_creation: {
+      enabled: true,
+    },
     success_url: `${origin}/settings?payment=success&credits=${pkg.credits}`,
     cancel_url: `${origin}/settings?payment=cancelled`,
   });
