@@ -1,5 +1,6 @@
 "use server";
 
+import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/types/database";
 
@@ -133,6 +134,7 @@ export async function createGenerationAction(
   });
 
   if (error) {
+    logger.error("create_generation", error.message, error, { roomId, styleId });
     return { error: mapGenerationRpcError(error.message), generation: null };
   }
 

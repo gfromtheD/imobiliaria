@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { logger } from "@/lib/logger";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -10,6 +11,7 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!signature || !webhookSecret) {
+    logger.warn("stripe_webhook", "Firma o webhook secret no configurado.");
     return NextResponse.json(
       { error: "Firma o webhook secret no configurado." },
       { status: 400 },
@@ -22,8 +24,14 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Firma inválida";
+    logger.error("stripe_webhook", `Firma de webhook inválida: ${message}`, err);
     return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
   }
+
+  logger.info("stripe_webhook", "Evento de Stripe recibido", {
+    id: event.id,
+    type: event.type,
+  });
 
   const admin = createAdminClient();
 
@@ -60,7 +68,11 @@ export async function POST(req: Request) {
           });
 
           if (error) {
-            console.error("Error al aplicar recarga de créditos:", error);
+            logger.critical("stripe_webhook", "Error al aplicar recarga de créditos en base de datos", error, {
+              orgId,
+              credits,
+              eventId: event.id,
+            });
             return NextResponse.json(
               { error: "Error en la base de datos al recargar créditos." },
               { status: 500 },

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function AppError({
@@ -9,6 +10,13 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  console.error(error);
+  useEffect(() => {
+    console.error("[AppError] Unhandled error:", {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+    });
+  }, [error]);
+
   return <ErrorState onRetry={reset} />;
 }
