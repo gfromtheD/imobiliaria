@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:cloud": "pwsh -NoProfile -File supabase/tests/cloud_e2e.ps1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

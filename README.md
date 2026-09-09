@@ -182,13 +182,9 @@ Run typecheck:
 
 pnpm typecheck
 
-Run unit tests:
+Run the Cloud E2E harness (requires a linked Cloud project and credentials in `.env.local`):
 
-pnpm test
-
-Run E2E tests:
-
-pnpm test:e2e
+pnpm test:cloud
 
 Build:
 

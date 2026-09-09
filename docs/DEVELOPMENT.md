@@ -237,14 +237,20 @@ pnpm install
 pnpm dev
 pnpm lint
 pnpm typecheck
-pnpm test
-pnpm test:e2e
+pnpm test:cloud
 pnpm build
 
 Supabase local:
 
 supabase start
 supabase functions serve
+
+Cloud E2E (requiere proyecto enlazado y credenciales Cloud en `.env.local`):
+
+pnpm test:cloud
+
+El harness crea un usuario y datos temporales confirmados por la API administrativa,
+ejecuta el pipeline con `MockAdapter`, aplica un timeout acotado y elimina sus datos al finalizar.
 
 Los comandos reales deben reflejar package.json.
 
