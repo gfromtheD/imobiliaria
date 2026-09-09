@@ -186,6 +186,10 @@ Run the Cloud E2E harness (requires a linked Cloud project and credentials in `.
 
 pnpm test:cloud
 
+Run the signed Stripe Test webhook harness (requires the configured Test webhook and Vercel protection bypass):
+
+pnpm test:stripe
+
 Build:
 
 pnpm build

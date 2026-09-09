@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:cloud": "pwsh -NoProfile -File supabase/tests/cloud_e2e.ps1"
+    "test:cloud": "pwsh -NoProfile -File supabase/tests/cloud_e2e.ps1",
+    "test:stripe": "pwsh -NoProfile -File supabase/tests/stripe_webhook_e2e.ps1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

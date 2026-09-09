@@ -238,6 +238,7 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test:cloud
+pnpm test:stripe
 pnpm build
 
 Supabase local:
@@ -251,6 +252,13 @@ pnpm test:cloud
 
 El harness crea un usuario y datos temporales confirmados por la API administrativa,
 ejecuta el pipeline con `MockAdapter`, aplica un timeout acotado y elimina sus datos al finalizar.
+
+Stripe Test E2E (requiere el webhook Test y el bypass de protección de Vercel configurados):
+
+pnpm test:stripe
+
+El harness firma un evento Test de Checkout, comprueba la recarga de créditos y repite
+el mismo evento para verificar la idempotencia. El evento, usuario y organización temporales se eliminan al finalizar.
 
 Los comandos reales deben reflejar package.json.
 
