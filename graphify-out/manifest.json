@@ -342,10 +342,10 @@
     "semantic_hash": "9b77af189a21a7a64e4bd7a426f64176"
   },
   "package.json": {
-    "mtime": 1788962791.119238,
-    "seen": 1788963252.169813,
-    "ast_hash": "45915d31c526f0fd5769c6aa43b30079",
-    "semantic_hash": "45915d31c526f0fd5769c6aa43b30079"
+    "mtime": 1788963585.6738732,
+    "seen": 1788963654.0322797,
+    "ast_hash": "00c330ab244949e67d16867d9ba73e2d",
+    "semantic_hash": "00c330ab244949e67d16867d9ba73e2d"
   },
   "postcss.config.mjs": {
     "mtime": 1786919904.7949252,
@@ -778,5 +778,11 @@
     "seen": 1788963252.1728117,
     "ast_hash": "4188dd8d6b745cca5d443108639b1fe2",
     "semantic_hash": "4188dd8d6b745cca5d443108639b1fe2"
+  },
+  "supabase/tests/stripe_webhook_e2e.ps1": {
+    "mtime": 1788963585.6728942,
+    "seen": 1788963654.0352802,
+    "ast_hash": "88fdb1a04abd9fea3d5babb0648ea8cb",
+    "semantic_hash": "88fdb1a04abd9fea3d5babb0648ea8cb"
   }
 }
