@@ -2,10 +2,11 @@
 
 import { useActionState, useEffect, useState } from "react";
 
-import { Sparkles } from "lucide-react";
+import { FrameAlt, RefreshDouble } from "iconoir-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { ProductIcon } from "@/components/ui/product-icon";
 import {
   Select,
   SelectContent,
@@ -70,7 +71,10 @@ export function GenerationForm({
       )}
 
       <Button type="submit" disabled={pending || disabled || !styleId} className="gap-2">
-        <Sparkles className={`size-4 ${pending ? "animate-spin" : ""}`} />
+        <ProductIcon
+          icon={pending ? RefreshDouble : FrameAlt}
+          className={`size-4 ${pending ? "animate-spin motion-reduce:animate-none" : ""}`}
+        />
         {pending ? "Creando generación…" : "Generar decoración"}
       </Button>
     </form>

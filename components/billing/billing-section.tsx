@@ -1,10 +1,11 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Check, CreditCard, Sparkles, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Coins, CreditCard, OpenNewWindow, RefreshDouble } from "iconoir-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProductIcon } from "@/components/ui/product-icon";
 import {
   Card,
   CardContent,
@@ -104,7 +105,7 @@ export function BillingSection({
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <ProductIcon icon={Coins} className="size-4 text-primary" />
               <span className="text-sm font-medium">Créditos disponibles</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
@@ -116,7 +117,7 @@ export function BillingSection({
           </div>
           <div className="rounded-lg border p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <CreditCard className="h-4 w-4" />
+              <ProductIcon icon={CreditCard} className="size-4" />
               <span className="text-sm font-medium">En proceso / reservados</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
@@ -135,9 +136,9 @@ export function BillingSection({
             title={!hasCustomer ? "Disponible tras realizar la primera compra" : undefined}
           >
             {isPortalPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <ProductIcon icon={RefreshDouble} className="mr-2 size-4 animate-spin motion-reduce:animate-none" />
             ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
+              <ProductIcon icon={OpenNewWindow} className="mr-2 size-4" />
             )}
             Gestionar facturación (Portal Stripe)
           </Button>
@@ -185,15 +186,15 @@ export function BillingSection({
                   </div>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
+                      <ProductIcon icon={Check} className="size-4 text-primary" />
                       <span>{pkg.credits} imágenes staged de alta definición</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
+                      <ProductIcon icon={Check} className="size-4 text-primary" />
                       <span>Sin caducidad de créditos</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
+                      <ProductIcon icon={Check} className="size-4 text-primary" />
                       <span>Descargas PNG de alta resolución</span>
                     </li>
                   </ul>
@@ -207,7 +208,7 @@ export function BillingSection({
                   >
                     {isCheckoutPending && isSelected ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <ProductIcon icon={RefreshDouble} className="mr-2 size-4 animate-spin motion-reduce:animate-none" />
                         Conectando con Stripe...
                       </>
                     ) : (
