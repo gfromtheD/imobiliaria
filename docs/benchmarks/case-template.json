@@ -1,0 +1,20 @@
+{
+  "caseId": "case-001",
+  "category": "salon-con-ventanas",
+  "manualPackage": "benchmarks/runs/case-001.json",
+  "provider": "not-tested",
+  "model": "not-tested",
+  "outputLocation": "local-only",
+  "evaluation": {
+    "criticalStructuralAlteration": null,
+    "geometryPreserved": null,
+    "doorsWindowsPreserved": null,
+    "perspectivePreserved": null,
+    "photorealism": null,
+    "furnitureIntegration": null,
+    "presetFit": null,
+    "artifacts": null,
+    "commerciallyUsable": null,
+    "notes": ""
+  }
+}

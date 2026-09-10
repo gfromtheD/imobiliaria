@@ -1,27 +1,28 @@
-# Graph Report - imobiliaria  (2026-09-09)
+# Graph Report - imobiliaria  (2026-09-10)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 134 files · ~62,622 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1029 nodes · 1518 edges · 64 communities (47 shown, 11 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
+- 1122 nodes · 1662 edges · 75 communities (56 shown, 13 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c3f040e5`
+- Built from commit: `e2e03d07`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - cn
-- generations-section.tsx
-- createClient
+- domain.ts
+- properties.ts
 - MASTER.md
 - AI.md
 - DATABASE.md
 - compilerOptions
-- process-generation/index.ts
+- mock_adapter.ts
 - ROADMAP.md
 - Virtual Staging SaaS
 - ARCHITECTURE.md
@@ -39,7 +40,7 @@
 - PRODUCT.md
 - 28. DEFINITION OF MVP COMPLETE
 - PROJECT_AUDIT.md
-- billing.ts
+- generation_instructions.ts
 - PHASE 0 VALIDATION — Pipeline Asíncrono
 - dependencies
 - 20260815030000_rpc_null_and_scheduler_fixes.sql
@@ -51,14 +52,14 @@
 - phase0_validation.ps1
 - proxy.ts
 - graphify reference: extra exports and benchmark
-- devDependencies
-- scripts
+- process-generation/index.ts
+- createClient
 - 20260815000000_phase0_pipeline.sql
 - cloud_e2e.ps1
 - stripe_webhook_e2e.ps1
 - 13. PLANNING
 - graphify reference: query, path, explain
-- app/layout.tsx
+- database.ts
 - graphify reference: add a URL and watch a folder
 - graphify reference: commit hook and native CLAUDE.md integration
 - graphify reference: incremental update and cluster-only
@@ -68,75 +69,86 @@
 - vercel.json
 - eslint.config.mjs
 - VIRTUAL STAGING SAAS
-- next.config.ts
+- generations.ts
 - extraction-spec.md
 - postcss.config.mjs
 - public.phase0_config
+- (app)/layout.tsx
+- rooms.ts
+- generation_provider.ts
+- ALPHA_SETUP_GUIDE.md
+- Guía de Despliegue, Staging y Configuración de Dominio
+- Benchmark manual de proveedores de imagen
+- process-job/index.ts
+- 20260815040000_stripe_billing.sql
+- GenerationsSection
+- ProviderAdapter
+- public.app_config
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 40 edges
 2. `createClient()` - 38 edges
 3. `Button()` - 21 edges
-4. `28. DEFINITION OF MVP COMPLETE` - 18 edges
-5. `Virtual Staging SaaS` - 17 edges
-6. `compilerOptions` - 16 edges
-7. `PHASE 0 VALIDATION — Pipeline Asíncrono` - 15 edges
-8. `2. Funcionalidades obligatorias` - 14 edges
-9. `7. DOCUMENT HIERARCHY` - 14 edges
-10. `8. Pipeline` - 13 edges
+4. `react` - 21 edges
+5. `28. DEFINITION OF MVP COMPLETE` - 18 edges
+6. `Virtual Staging SaaS` - 17 edges
+7. `compilerOptions` - 16 edges
+8. `next` - 15 edges
+9. `PHASE 0 VALIDATION — Pipeline Asíncrono` - 15 edges
+10. `7. DOCUMENT HIERARCHY` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `CardAction()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/card.tsx → lib/utils.ts
-- `AlertDialogMedia()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/alert-dialog.tsx → lib/utils.ts
-- `AlertDialogOverlay()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/alert-dialog.tsx → lib/utils.ts
-- `SelectGroup()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/select.tsx → lib/utils.ts
-- `SelectLabel()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/select.tsx → lib/utils.ts
+- `GenerationsPage()` --calls--> `listAllGenerations()`  [EXTRACTED]
+  app/(app)/generations/page.tsx → services/generations.ts
+- `EditPropertyPage()` --calls--> `getProperty()`  [EXTRACTED]
+  app/(app)/properties/[propertyId]/edit/page.tsx → services/properties.ts
+- `NewRoomPage()` --calls--> `getProperty()`  [EXTRACTED]
+  app/(app)/properties/[propertyId]/rooms/new/page.tsx → services/properties.ts
+- `POST()` --calls--> `createAdminClient()`  [EXTRACTED]
+  app/api/webhooks/stripe/route.ts → lib/supabase/admin.ts
+- `GET()` --calls--> `createClient()`  [EXTRACTED]
+  app/auth/callback/route.ts → lib/supabase/server.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (64 total, 11 thin omitted)
+## Communities (75 total, 13 thin omitted)
 
 ### Community 0 - "cn"
-Cohesion: 0.06
-Nodes (55): metadata, metadata, metadata, metadata, AuthCard(), ForgotPasswordForm(), initialState, initialState (+47 more)
-
-### Community 1 - "generations-section.tsx"
-Cohesion: 0.06
-Nodes (55): AppLayout(), metadata, PropertiesPage(), metadata, metadata, SettingsPage(), BillingSectionProps, BeforeAfterSlider() (+47 more)
-
-### Community 2 - "createClient"
 Cohesion: 0.05
-Nodes (58): GenerationsPage(), metadata, EditPropertyPage(), metadata, PropertyDetailPage(), metadata, NewRoomPage(), metadata (+50 more)
+Nodes (76): metadata, metadata, metadata, metadata, AuthCard(), ForgotPasswordForm(), initialState, initialState (+68 more)
+
+### Community 1 - "domain.ts"
+Cohesion: 0.14
+Nodes (13): ALLOWED_IMAGE_MIME, GENERATION_STATUS_DESCRIPTIONS, GENERATION_STATUSES, MAX_IMAGE_BYTES, MAX_ROOMS_PER_PROPERTY, PROPERTY_STATUSES, PropertyStatus, ROOM_TYPE_DESCRIPTIONS (+5 more)
+
+### Community 2 - "properties.ts"
+Cohesion: 0.07
+Nodes (30): metadata, metadata, PropertiesPage(), EditPropertyPage(), metadata, PropertyDetailPage(), metadata, NewRoomPage() (+22 more)
 
 ### Community 3 - "MASTER.md"
-Cohesion: 0.06
+Cohesion: 0.05
 Nodes (35): 0. PURPOSE, 10. FIRST ACTION, 11. TASK SELECTION, 12. TASK SIZE, 14. IMPLEMENTATION, 15. TESTING, 16. FAILURE RULE, 17. ARCHITECTURE CHANGE RULE (+27 more)
 
 ### Community 4 - "AI.md"
-Cohesion: 0.06
-Nodes (34): 10. Créditos, 11. Prompts, 12. Input, 13. Arquitectura visual, 14. Original vs generated, 15. Asincronía, 16. Polling / Realtime, 17. Rate limiting (+26 more)
+Cohesion: 0.05
+Nodes (35): 10. Créditos, 11. Prompts, 12. Input, 13. Arquitectura visual, 14. Original vs generated, 15. Asincronía, 16. Polling / Realtime, 17. Rate limiting (+27 more)
 
 ### Community 5 - "DATABASE.md"
-Cohesion: 0.07
+Cohesion: 0.06
 Nodes (29): 10. Índices iniciales, 11. Migraciones, 12. Datos sensibles, 13. Eliminación, 14. Regla, 1. Base de datos, 2. Entidades principales, 3. Relaciones (+21 more)
 
 ### Community 6 - "compilerOptions"
-Cohesion: 0.07
-Nodes (29): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+21 more)
-
-### Community 7 - "process-generation/index.ts"
 Cohesion: 0.11
-Nodes (19): asRow(), authHeaders(), callRpc(), getRow(), mock, Row, mock, RpcArgs (+11 more)
+Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
+
+### Community 7 - "mock_adapter.ts"
+Cohesion: 0.25
+Nodes (11): GenerationInput, GenerationSubmission, chunk(), crc32(), CRC_TABLE, fnv1a(), MockAdapter, MockImageArtifact (+3 more)
 
 ### Community 8 - "ROADMAP.md"
-Cohesion: 0.12
-Nodes (26): 7-DAY TARGET, Día 1, Día 2, Día 3, Día 4, Día 5, Día 6, Día 7 (+18 more)
+Cohesion: 0.05
+Nodes (42): 7-DAY TARGET, Día 1, Día 2, Día 3, Día 4, Día 5, Día 6, Día 7 (+34 more)
 
 ### Community 9 - "Virtual Staging SaaS"
 Cohesion: 0.07
@@ -167,11 +179,11 @@ Cohesion: 0.08
 Nodes (23): 10. Abuse protection, 11. Stripe, 12. AI, 13. Logging, 14. GDPR, 15. Data deletion, 16. Error messages, 17. Dependencies (+15 more)
 
 ### Community 16 - "AGENTS.md"
-Cohesion: 0.09
-Nodes (22): 10. GENERATION STATES, 11. TASK SIZE, 12. BEFORE CODING, 13. AFTER CODING, 14. DO NOT REWRITE, 15. DEPENDENCIES, 16. SECRETS, 17. DOCUMENTATION (+14 more)
+Cohesion: 0.08
+Nodes (23): 10. GENERATION STATES, 11. TASK SIZE, 12. BEFORE CODING, 13. AFTER CODING, 14. DO NOT REWRITE, 15. DEPENDENCIES, 16. SECRETS, 17. DOCUMENTATION (+15 more)
 
 ### Community 17 - "DEVELOPMENT.md"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (22): 10. Tests, 11. Definition of Done, 12. Cambios de arquitectura, 13. Deployment, 14. Rollback, 15. Local development, 16. Regla, 1. Objetivo (+14 more)
 
 ### Community 18 - "components.json"
@@ -179,11 +191,11 @@ Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
 ### Community 19 - "package.json"
-Cohesion: 0.09
-Nodes (21): name, packageManager, private, version, class-variance-authority, clsx, eslint, eslint-config-next (+13 more)
+Cohesion: 0.05
+Nodes (47): POST(), BillingSection(), CREDIT_PACKAGES, getCreditPackage(), stripe, createAdminClient(), devDependencies, eslint (+39 more)
 
 ### Community 20 - "BILLING.md"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (18): 10. Webhooks, 11. Estado de suscripción, 12. Billing y generación, 13. Pricing inicial, 14. Coste interno, 15. No hacer, 16. Regla, 1. Objetivo (+10 more)
 
 ### Community 21 - "resend.ts"
@@ -199,12 +211,12 @@ Cohesion: 0.11
 Nodes (18): 28. DEFINITION OF MVP COMPLETE, AI, Analytics, Authentication, Billing, Comparison, Deployment, Download (+10 more)
 
 ### Community 24 - "PROJECT_AUDIT.md"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (16): 10. Preguntas que necesitan respuesta humana, 11. Checklist de condiciones para comenzar el desarrollo, 1. Resumen de lo que se ha entendido, 2. Arquitectura entendida, 3. Flujo del producto entendido, 4. Documentos revisados, 5. Decisiones cerradas, 6. Decisiones todavía abiertas (+8 more)
 
-### Community 25 - "billing.ts"
-Cohesion: 0.26
-Nodes (12): POST(), BillingSection(), CREDIT_PACKAGES, getCreditPackage(), stripe, createAdminClient(), server-only, stripe (+4 more)
+### Community 25 - "generation_instructions.ts"
+Cohesion: 0.14
+Nodes (13): FIDELITY_POLICY, PresetDefinition, PRESETS, PROMPT_VERSION, resolveGenerationInstructions(), FidelityPolicy, input(), createManualBenchmarkPackage() (+5 more)
 
 ### Community 26 - "PHASE 0 VALIDATION — Pipeline Asíncrono"
 Cohesion: 0.12
@@ -215,15 +227,15 @@ Cohesion: 0.12
 Nodes (16): dependencies, class-variance-authority, clsx, lucide-react, next, radix-ui, react, react-dom (+8 more)
 
 ### Community 28 - "20260815030000_rpc_null_and_scheduler_fixes.sql"
-Cohesion: 0.17
-Nodes (11): public.app_config, public.generations, public.subscriptions, recovered, public.complete_generation(), public.fail_generation(), public.process_generation_jobs(), public.retry_generation() (+3 more)
+Cohesion: 0.22
+Nodes (8): public.generations, recovered, public.complete_generation(), public.fail_generation(), public.process_generation_jobs(), public.retry_generation(), public.app_config, public.subscriptions
 
 ### Community 30 - "7. DOCUMENT HIERARCHY"
 Cohesion: 0.14
 Nodes (14): 7. DOCUMENT HIERARCHY, AGENTS.md, AI.md, ARCHITECTURE.md, BILLING.md, DATABASE.md, DEVELOPMENT.md, MVP.md (+6 more)
 
 ### Community 31 - "TECHNICAL_DECISIONS.md"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (12): 10. Decisiones abiertas adicionales, 11. Regla, 1. Procesamiento asíncrono, 2. Storage, 3. Multi-tenancy, 4. Créditos, 5. Rate limiting, 6. IA (+4 more)
 
 ### Community 32 - "phase1_foundation.ps1"
@@ -246,13 +258,13 @@ Nodes (7): APP_ROUTE_PREFIXES, AUTH_ROUTES, isAppRoute(), isAuthRoute(), updateS
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 37 - "devDependencies"
-Cohesion: 0.22
-Nodes (9): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node, @types/react, @types/react-dom (+1 more)
+### Community 37 - "process-generation/index.ts"
+Cohesion: 0.18
+Nodes (10): asRow(), authHeaders(), callRpc(), downloadOriginalImage(), getRow(), provider, Row, ImageArtifact (+2 more)
 
-### Community 38 - "scripts"
-Cohesion: 0.25
-Nodes (8): scripts, build, dev, lint, start, test:cloud, test:stripe, typecheck
+### Community 38 - "createClient"
+Cohesion: 0.30
+Nodes (11): metadata, RoomDetailPage(), GET(), HomePage(), createClient(), getStagedImageUrl(), getSubscription(), listGenerations() (+3 more)
 
 ### Community 39 - "20260815000000_phase0_pipeline.sql"
 Cohesion: 0.32
@@ -270,9 +282,9 @@ Nodes (6): 13. PLANNING, Acceptance criteria, Dependencies, Files, Goal, Tests
 Cohesion: 0.33
 Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
 
-### Community 44 - "app/layout.tsx"
-Cohesion: 0.40
-Nodes (3): geistMono, geistSans, metadata
+### Community 44 - "database.ts"
+Cohesion: 0.18
+Nodes (11): CompositeTypes, Constants, Database, DatabaseWithoutInternals, DefaultSchema, Enums, Json, Tables (+3 more)
 
 ### Community 45 - "graphify reference: add a URL and watch a folder"
 Cohesion: 0.50
@@ -290,25 +302,61 @@ Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphif
 Cohesion: 0.67
 Nodes (3): 4. MVP SCOPE, EXCLUDED, INCLUDED
 
+### Community 56 - "generations.ts"
+Cohesion: 0.21
+Nodes (11): GenerationsPage(), metadata, GenerationForm(), AllGenerationsItem, createGenerationAction(), CreateGenerationResult, GenerationListItem, getOriginalImageUrlByPath() (+3 more)
+
+### Community 64 - "(app)/layout.tsx"
+Cohesion: 0.26
+Nodes (9): AppLayout(), SettingsPage(), AppSidebar(), SidebarNavLink(), SUBSCRIPTION_PLAN_LABELS, getBillingData(), CurrentOrganization, getCurrentOrganization() (+1 more)
+
+### Community 65 - "rooms.ts"
+Cohesion: 0.22
+Nodes (11): RoomUploadForm(), handleSubmit(), validateFile(), RoomType, sanitizeFileName(), createClient(), createRoomAction(), CreateRoomResult (+3 more)
+
+### Community 66 - "generation_provider.ts"
+Cohesion: 0.23
+Nodes (10): CompletedGeneration, GENERATION_PROVIDER_CONTRACT_VERSION, GenerationPollInput, GenerationPollResult, GenerationResult, OriginalImageAccess, OriginalImageReference, ResolvedGenerationInstructions (+2 more)
+
+### Community 67 - "ALPHA_SETUP_GUIDE.md"
+Cohesion: 0.17
+Nodes (10): 1. Despliegue Gratuito en Vercel (`*.vercel.app`), 2. Configuración de Supabase para Vercel (`*.vercel.app`), 3. Stripe: Checklist de Claves para Producción, 4. IA: Modo Mock Activo (Coste Cero), 5. Proveedores SMTP para Supabase Auth (Opciones Futuras), 6. Resumen de Apertura de la Alpha, Guía de Puesta en Marcha Alpha (Zero-Cost & Free Staging), Opción 1: Resend (Recomendada) (+2 more)
+
+### Community 68 - "Guía de Despliegue, Staging y Configuración de Dominio"
+Cohesion: 0.22
+Nodes (8): 1. Despliegue en Vercel, 2. Configuración de Dominio y Certificados HTTPS, 3. Configuración de Supabase para el Dominio de Producción, 4. Configuración de Stripe Webhooks en Modo Alpha / Producción, Guía de Despliegue, Staging y Configuración de Dominio, Opción Recomendada: Subdominio de Aplicación (`app.tu-dominio.com`), Repositorio, Variables de Entorno en Vercel (Staging y Production)
+
+### Community 69 - "Benchmark manual de proveedores de imagen"
+Cohesion: 0.33
+Nodes (5): Benchmark manual de proveedores de imagen, Paquete reproducible, Propósito, Registro del benchmark, Reglas
+
+### Community 71 - "20260815040000_stripe_billing.sql"
+Cohesion: 0.60
+Nodes (4): public.apply_credit_purchase(), public.stripe_events, public.sync_stripe_subscription(), public.subscriptions
+
+### Community 72 - "GenerationsSection"
+Cohesion: 0.50
+Nodes (4): GenerationsSection(), handleCancel(), statusVariant(), cancelGenerationAction()
+
 ## Knowledge Gaps
-- **575 isolated node(s):** `PropertyRow`, `CurrentOrganization`, `BeforeAfterSliderProps`, `GenerationViewItem`, `PropertyStatus` (+570 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 651 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **613 isolated node(s):** `metadata`, `metadata`, `metadata`, `metadata`, `metadata` (+608 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 714 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `cn` to `generations-section.tsx`, `page-skeleton.tsx`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `next` connect `createClient` to `generations-section.tsx`, `package.json`?**
+- **Why does `next` connect `properties.ts` to `generations.ts`, `cn`, `package.json`, `createClient`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `createClient()` connect `createClient` to `cn`, `billing.ts`, `generations-section.tsx`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **What connects `PropertyRow`, `CurrentOrganization`, `BeforeAfterSliderProps` to the rest of the system?**
-  _575 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `react` connect `cn` to `properties.ts`, `package.json`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **What connects `metadata`, `metadata`, `metadata` to the rest of the system?**
+  _613 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
-  _Cohesion score 0.058544303797468354 - nodes in this community are weakly interconnected._
-- **Should `generations-section.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05927405927405927 - nodes in this community are weakly interconnected._
-- **Should `createClient` be split into smaller, more focused modules?**
-  _Cohesion score 0.05311871227364185 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.054873054873054876 - nodes in this community are weakly interconnected._
+- **Should `domain.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+- **Should `properties.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._
+- **Should `MASTER.md` be split into smaller, more focused modules?**
+  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._

@@ -1,3 +1,9 @@
+import type {
+  GenerationInput,
+  GenerationSubmission,
+  ProviderAdapter,
+} from "./generation_provider.ts";
+
 // MockAdapter — simulates an AI image provider without real API keys.
 // Fase 1: produces a real PNG artifact (deterministic per style) that the worker
 // uploads to staged-images, so the full pipeline (job -> provider -> storage -> result)
@@ -58,7 +64,7 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
 async function zlibDeflate(data: Uint8Array): Promise<Uint8Array> {
   const cs = new CompressionStream("deflate");
   const writer = cs.writable.getWriter();
-  writer.write(data);
+  writer.write(new Uint8Array(data).buffer);
   writer.close();
   const reader = cs.readable.getReader();
   const parts: Uint8Array[] = [];
@@ -93,7 +99,10 @@ function rgbFromHash(hash: number): [number, number, number] {
 
 // Deterministic 64x48 RGBA render: wall color derived from the style, a "furniture"
 // bar along the bottom and a window-like block — enough to prove storage round-trip.
-async function renderMockPng(style: string, roomType: string): Promise<MockImageArtifact> {
+async function renderMockPng(
+  style: string,
+  roomType: string,
+): Promise<Pick<MockImageArtifact, "mime" | "base64" | "width" | "height">> {
   const width = 64;
   const height = 48;
   const [r, g, b] = rgbFromHash(fnv1a(style));
@@ -151,7 +160,44 @@ async function renderMockPng(style: string, roomType: string): Promise<MockImage
   return { mime: "image/png", base64, width, height };
 }
 
-export class MockAdapter {
+export class MockAdapter implements ProviderAdapter {
+  readonly provider = "mock";
+
+  /**
+   * ProviderAdapter implementation. The mock intentionally does not load the
+   * original image, proving that development never reads or sends it anywhere.
+   */
+  async submit(input: GenerationInput): Promise<GenerationSubmission> {
+    const artifact = await this.generate(
+      {
+        room_type: input.instructions.roomType,
+        style: input.instructions.presetId,
+        parameters: input.parameters,
+      },
+      { attempt: input.attempt },
+    );
+    const bytes = Uint8Array.from(atob(artifact.base64), (c) => c.charCodeAt(0));
+
+    return {
+      status: "completed",
+      result: {
+        image: {
+          bytes,
+          mime: artifact.mime,
+          width: artifact.width,
+          height: artifact.height,
+        },
+        provider: this.provider,
+        model: "mock-v1",
+        providerCostEstimate: 0,
+        metadata: {
+          artifact: artifact.artifact,
+          simulated: true,
+        },
+      },
+    };
+  }
+
   /**
    * Simulates provider work. Fails on the first attempt when the job asks for it:
    * `parameters.mock_fail === true` (Fase 1) or `fail === true` in the payload
