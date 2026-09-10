@@ -9,9 +9,17 @@
 // hace passthrough del header entrante (dev sin service role no puede escribir Storage).
 
 import { MockAdapter } from "../_shared/mock_adapter.ts";
-import { buildStagingPrompt, PROMPT_VERSION } from "../_shared/prompt.ts";
+import {
+  ProviderError,
+  type ImageArtifact,
+  type ImageMimeType,
+  type ProviderAdapter,
+} from "../_shared/generation_provider.ts";
+import { resolveGenerationInstructions } from "../_shared/generation_instructions.ts";
 
-const mock = new MockAdapter();
+// The configured adapter stays behind the Ambivio contract. This phase keeps
+// MockAdapter as the only implementation and makes no external request.
+const provider: ProviderAdapter = new MockAdapter();
 
 type Row = Record<string, unknown>;
 
@@ -75,27 +83,60 @@ async function getRow(
   return asRow(await res.json());
 }
 
-async function uploadPng(
+async function uploadImage(
   apiUrl: string,
   auth: string,
   apikey: string,
   path: string,
-  base64: string,
+  image: ImageArtifact,
 ): Promise<void> {
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const res = await fetch(`${apiUrl}/storage/v1/object/staged-images/${path}`, {
     method: "POST",
     headers: {
       apikey,
       Authorization: auth,
-      "Content-Type": "image/png",
+      "Content-Type": image.mime,
     },
-    body: bytes,
+    body: new Uint8Array(image.bytes).buffer,
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`storage upload failed: ${res.status} ${text.slice(0, 300)}`);
   }
+}
+
+function outputExtension(mime: ImageMimeType): "png" | "jpg" {
+  return mime === "image/png" ? "png" : "jpg";
+}
+
+/**
+ * A future real adapter may call this loader to obtain private image bytes.
+ * MockAdapter never invokes it, so this phase does not read or expose uploads.
+ */
+async function downloadOriginalImage(
+  apiUrl: string,
+  auth: string,
+  apikey: string,
+  path: string,
+): Promise<ImageArtifact> {
+  const res = await fetch(`${apiUrl}/storage/v1/object/original-images/${path}`, {
+    headers: { apikey, Authorization: auth },
+  });
+  if (!res.ok) {
+    throw new ProviderError("original_image_unavailable", "Original image is unavailable", {
+      retryable: true,
+    });
+  }
+  const contentType = res.headers.get("content-type")?.split(";", 1)[0];
+  if (contentType !== "image/jpeg" && contentType !== "image/png") {
+    throw new ProviderError("original_image_type_invalid", "Original image type is invalid", {
+      terminal: true,
+    });
+  }
+  return {
+    bytes: new Uint8Array(await res.arrayBuffer()),
+    mime: contentType,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -146,7 +187,7 @@ Deno.serve(async (req) => {
     // 2. Contexto del job (room + style).
     const room = await getRow(
       apiUrl, auth, apikey, "rooms",
-      "room_type,property_id,organization_id",
+      "room_type,property_id,organization_id,original_image_path",
       String(claimed.room_id),
     );
     const style = await getRow(
@@ -161,29 +202,60 @@ Deno.serve(async (req) => {
       throw err;
     }
 
-    // 3. Prompt determinista + proveedor (MockAdapter en esta fase).
-    const prompt = buildStagingPrompt(String(room.room_type), String(style.ai_preset));
-    const artifact = await mock.generate(
-      { room_type: String(room.room_type), style: String(style.ai_preset), parameters },
-      { attempt: retryCount },
-    );
+    const originalImagePath = String(room.original_image_path ?? "");
+    if (!originalImagePath) {
+      throw new ProviderError("missing_original_image", "Original image is missing", { terminal: true });
+    }
+
+    // 3. Instrucciones versionadas + contrato de proveedor. El loader conserva
+    // los bytes en el worker y nunca crea una signed URL persistente.
+    let instructions;
+    try {
+      instructions = resolveGenerationInstructions(String(room.room_type), String(style.ai_preset));
+    } catch {
+      throw new ProviderError("unsupported_preset", "Style preset is unsupported", { terminal: true });
+    }
+    const submission = await provider.submit({
+      generationId,
+      attempt: retryCount,
+      originalImage: {
+        reference: { bucket: "original-images", path: originalImagePath },
+        load: () => downloadOriginalImage(apiUrl, auth, apikey, originalImagePath),
+      },
+      instructions,
+      parameters,
+    });
+
+    // This branch is intentionally unreachable while MockAdapter is configured.
+    // A future async adapter needs an approved RPC/migration to persist its job
+    // id before polling, preventing ambiguous retry charges.
+    if (submission.status === "submitted") {
+      throw new ProviderError(
+        "async_provider_not_enabled",
+        "Async provider persistence is not enabled",
+        { terminal: true },
+      );
+    }
+    const artifact = submission.result;
 
     // 4. Resultado a staged-images con ruta determinista {org}/{property}/{room}/{job}.
-    const outputPath = `${room.organization_id}/${room.property_id}/${claimed.room_id}/${claimed.id}.png`;
-    await uploadPng(apiUrl, auth, apikey, outputPath, artifact.base64);
+    const outputPath = `${room.organization_id}/${room.property_id}/${claimed.room_id}/${claimed.id}.${outputExtension(artifact.image.mime)}`;
+    await uploadImage(apiUrl, auth, apikey, outputPath, artifact.image);
 
     // 5. Completar: consume el crédito reservado y registra uso.
     await callRpc(apiUrl, auth, apikey, "complete_generation", {
       p_generation_id: generationId,
       p_output_path: outputPath,
-      p_provider_job_id: `mock-${generationId}`,
-      p_cost_estimate: 0,
+      p_provider_job_id: `${artifact.provider}-${generationId}`,
+      p_cost_estimate: artifact.providerCostEstimate,
       p_metadata: {
-        prompt: prompt.slice(0, 200),
-        prompt_version: PROMPT_VERSION,
-        width: artifact.width,
-        height: artifact.height,
-        simulated: true,
+        prompt: instructions.prompt.slice(0, 200),
+        prompt_version: instructions.promptVersion,
+        preset_version: instructions.presetVersion,
+        model: artifact.model,
+        width: artifact.image.width ?? 0,
+        height: artifact.image.height ?? 0,
+        ...artifact.metadata,
       },
     });
 

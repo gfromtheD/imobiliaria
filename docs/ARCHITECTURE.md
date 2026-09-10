@@ -53,9 +53,9 @@ Supabase Edge Functions (worker de IA)
 ImageGenerationService
 ↓
 ProviderAdapter
-├── OpenAIAdapter
-└── FluxAdapter
-(candidatos — decisión pendiente de validación)
+├── MockAdapter (desarrollo y regresión)
+└── RealProviderAdapter (futuro)
+(proveedor comercial pendiente de validación)
 
 Otros:
 
@@ -334,8 +334,8 @@ ProviderAdapter
 Ejemplo:
 
 ImageGenerationService
-→ OpenAIAdapter
-→ FluxAdapter
+→ ProviderAdapter
+→ MockAdapter / RealProviderAdapter
 
 Candidatos; la decisión de proveedor principal queda pendiente de validación con credenciales reales.
 

@@ -419,3 +419,27 @@ Registradas en TECHNICAL_DECISIONS.md como PENDING VALIDATION.
 La IA es un servicio externo.
 
 No construir la arquitectura alrededor de una API concreta.
+
+---
+
+## 22. Frontera de proveedor (v1)
+
+La Edge Function usa un contrato interno `ProviderAdapter`, no SDKs de
+proveedor. El contrato separa:
+
+- `GenerationInput`: original privado, instrucciones resueltas, intento e ID;
+- `GenerationSubmission`: resultado inmediato o `provider_job_id` para polling;
+- `GenerationResult`: bytes, MIME, dimensiones, proveedor, modelo y coste;
+- `ProviderError`: código normalizado, retry y envío ambiguo.
+
+`MockAdapter` implementa este contrato y sigue siendo el único adaptador
+configurado. No hay proveedor comercial integrado.
+
+Los proveedores asíncronos requieren una fase posterior aprobada para persistir
+el `provider_job_id` antes de reintentar y programar polling. Nunca se debe
+reenviar un trabajo tras un timeout ambiguo.
+
+Las instrucciones se resuelven en el worker desde `room_type`, `ai_preset` y
+una política de fidelidad versionada. Los parámetros del cliente no modifican
+el prompt. El modo manual se documenta en `BENCHMARK_MANUAL.md` y no expone
+rutas públicas, signed URLs ni credenciales.
