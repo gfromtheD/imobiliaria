@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Camera, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight, Building, Camera, FrameAlt } from "iconoir-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ProductIcon } from "@/components/ui/product-icon";
 
 export function OnboardingGuide() {
   const steps = [
@@ -16,7 +17,7 @@ export function OnboardingGuide() {
       step: "1",
       title: "Crea tu propiedad",
       description: "Define el inmueble y su ubicación para organizar sus estancias.",
-      icon: Building2,
+      icon: Building,
       active: true,
     },
     {
@@ -30,7 +31,7 @@ export function OnboardingGuide() {
       step: "3",
       title: "Genera el Staging con IA",
       description: "Elige un estilo (nórdico, moderno...) y obtén la transformación en segundos.",
-      icon: Sparkles,
+      icon: FrameAlt,
       active: false,
     },
   ];
@@ -39,7 +40,7 @@ export function OnboardingGuide() {
     <Card className="border-primary/20 bg-linear-to-b from-card to-muted/30">
       <CardHeader className="text-center pb-2">
         <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Sparkles className="size-6" />
+          <ProductIcon icon={FrameAlt} className="size-6" />
         </div>
         <CardTitle className="text-xl sm:text-2xl font-semibold">
           ¡Te damos la bienvenida a Virtual Staging!
@@ -52,7 +53,6 @@ export function OnboardingGuide() {
       <CardContent className="space-y-6 pt-4">
         <div className="grid gap-4 sm:grid-cols-3">
           {steps.map((item) => {
-            const Icon = item.icon;
             return (
               <div
                 key={item.step}
@@ -62,7 +62,7 @@ export function OnboardingGuide() {
                   {item.step}
                 </div>
                 <div className="mb-2 flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <Icon className="size-4" />
+                  <ProductIcon icon={item.icon} className="size-4" />
                 </div>
                 <h3 className="text-sm font-medium mb-1">{item.title}</h3>
                 <p className="text-xs text-muted-foreground">{item.description}</p>
@@ -75,7 +75,7 @@ export function OnboardingGuide() {
           <Link href="/properties/new">
             <Button size="lg" className="gap-2">
               Comenzar: Crear primera propiedad
-              <ArrowRight className="size-4" />
+              <ProductIcon icon={ArrowRight} className="size-4" />
             </Button>
           </Link>
         </div>

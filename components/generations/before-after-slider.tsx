@@ -2,15 +2,16 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  Maximize2,
+  ControlSlider,
   Download,
   Eye,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+  Expand,
+  Xmark,
+} from "iconoir-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProductIcon } from "@/components/ui/product-icon";
 
 export interface BeforeAfterSliderProps {
   originalUrl: string;
@@ -174,7 +175,7 @@ export function BeforeAfterSlider({
             onClick={() => setViewMode("slider")}
             className="text-xs h-8 gap-1.5"
           >
-            <SlidersHorizontal className="size-3.5" />
+            <ProductIcon icon={ControlSlider} className="size-3.5" />
             Comparador
           </Button>
           <Button
@@ -184,7 +185,7 @@ export function BeforeAfterSlider({
             onClick={() => setViewMode("staged")}
             className="text-xs h-8 gap-1.5"
           >
-            <Eye className="size-3.5" />
+            <ProductIcon icon={Eye} className="size-3.5" />
             Staging
           </Button>
           <Button
@@ -207,13 +208,13 @@ export function BeforeAfterSlider({
             className="text-xs h-8 gap-1.5"
             title="Ver a pantalla completa"
           >
-            <Maximize2 className="size-3.5" />
+            <ProductIcon icon={Expand} className="size-3.5" />
             Pantalla completa
           </Button>
 
           <a href={stagedUrl} download="staging-decorado.png">
             <Button size="sm" className="text-xs h-8 gap-1.5">
-              <Download className="size-3.5" />
+              <ProductIcon icon={Download} className="size-3.5" />
               Descargar PNG
             </Button>
           </a>
@@ -236,7 +237,7 @@ export function BeforeAfterSlider({
             <div className="flex items-center gap-3">
               <a href={stagedUrl} download="staging-decorado.png">
                 <Button size="sm" className="gap-1.5 text-xs">
-                  <Download className="size-3.5" />
+                  <ProductIcon icon={Download} className="size-3.5" />
                   Descargar PNG
                 </Button>
               </a>
@@ -246,7 +247,7 @@ export function BeforeAfterSlider({
                 onClick={() => setIsFullscreen(false)}
                 className="gap-1.5 text-xs"
               >
-                <X className="size-4" />
+                <ProductIcon icon={Xmark} className="size-4" />
                 Cerrar (ESC)
               </Button>
             </div>

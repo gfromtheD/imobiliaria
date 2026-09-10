@@ -106,6 +106,47 @@ CI debe ejecutar:
 
 ---
 
+## 7.1 Integración continua entre agentes
+
+`origin/main` es el punto común de integración estable. Las ramas
+especializadas permiten trabajar en paralelo, pero no representan productos
+independientes ni deben acumular varias fases importantes sobre una base
+antigua.
+
+### Antes de comenzar una fase
+
+Cada agente debe:
+
+1. ejecutar `git fetch origin`;
+2. comprobar el estado de `origin/main`;
+3. comparar su rama con el punto de integración;
+4. incorporar el `main` actualizado cuando corresponda;
+5. resolver y validar cualquier conflicto antes de empezar trabajo nuevo.
+
+### Durante una fase
+
+- trabajar en una rama especializada;
+- mantener el alcance pequeño;
+- producir commits comprensibles y verificables;
+- no modificar el dominio de otro agente sin necesidad demostrada;
+- preservar contratos funcionales, seguridad, datos y arquitectura.
+
+### Al terminar una unidad estable
+
+1. validar la unidad especializada;
+2. integrarla con el resto del producto sobre el `origin/main` actual;
+3. repetir los checks del producto combinado;
+4. actualizar `origin/main` mediante el flujo permitido, sin force push;
+5. volver a sincronizar las ramas activas con el nuevo punto común.
+
+### Regla de divergencia
+
+Una rama especializada no debe continuar con múltiples fases importantes si
+`origin/main` todavía no contiene unidades anteriores ya validadas. La
+especialización debe producir paralelismo, no productos divergentes.
+
+---
+
 ## 8. Agentes
 
 Un agente debe trabajar en una tarea concreta.

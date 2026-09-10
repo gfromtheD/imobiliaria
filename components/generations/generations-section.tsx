@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FrameAlt, RefreshDouble } from "iconoir-react";
 
 import { BeforeAfterSlider } from "@/components/generations/before-after-slider";
 import { GenerationForm } from "@/components/generations/generation-form";
@@ -15,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Sparkles } from "lucide-react";
+import { ProductIcon } from "@/components/ui/product-icon";
 import {
   GENERATION_STATUS_DESCRIPTIONS,
   GENERATION_STATUS_LABELS,
@@ -137,7 +138,7 @@ export function GenerationsSection({
         <h2 className="mb-3 text-lg font-semibold">Historial</h2>
         {generations.length === 0 ? (
           <EmptyState
-            icon={Sparkles}
+            icon={FrameAlt}
             title="Aún no hay generaciones"
             description="Genera la primera decoración de esta habitación con el estilo que prefieras."
           />
@@ -215,8 +216,11 @@ export function GenerationsSection({
 
                   {(generation.status === "pending" || generation.status === "processing") && (
                     <div className="flex items-center justify-between gap-3 pt-1">
-                      <div className="flex items-center gap-2 text-xs text-primary font-medium bg-primary/10 px-2.5 py-1.5 rounded-md animate-pulse">
-                        <Sparkles className="size-3.5" />
+                      <div className="flex items-center gap-2 rounded-sm border border-border bg-muted px-2.5 py-1.5 text-xs font-medium text-foreground">
+                        <ProductIcon
+                          icon={RefreshDouble}
+                          className="size-3.5 animate-spin motion-reduce:animate-none"
+                        />
                         <span>Generando decoración con IA...</span>
                       </div>
                       {generation.status === "pending" && (

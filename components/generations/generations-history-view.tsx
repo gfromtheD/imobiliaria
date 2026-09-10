@@ -3,21 +3,22 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
-  Search,
-  SlidersHorizontal,
-  ExternalLink,
-  Download,
-  X,
   Clock,
+  ControlSlider,
+  Download,
   Filter,
-} from "lucide-react";
+  FrameAlt,
+  OpenNewWindow,
+  Search,
+  Xmark,
+} from "iconoir-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ProductIcon } from "@/components/ui/product-icon";
 import { BeforeAfterSlider } from "@/components/generations/before-after-slider";
 import {
   GENERATION_STATUS_LABELS,
@@ -102,7 +103,7 @@ export function GenerationsHistoryView({
       {/* Filtros y búsqueda */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <ProductIcon icon={Search} className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por propiedad, estancia o estilo..."
             value={searchQuery}
@@ -111,10 +112,12 @@ export function GenerationsHistoryView({
           />
           {searchQuery && (
             <button
+              type="button"
+              aria-label="Limpiar búsqueda"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground outline-none transition-colors duration-[var(--motion-duration-control)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/25"
             >
-              <X className="size-4" />
+              <ProductIcon icon={Xmark} className="size-4" />
             </button>
           )}
         </div>
@@ -124,7 +127,7 @@ export function GenerationsHistoryView({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="h-10 rounded-md border bg-background px-3 py-1 text-sm shadow-xs focus:outline-hidden"
+            className="h-10 rounded-md border border-input bg-background px-3 py-1 text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-duration-control)] ease-[var(--motion-ease-out)] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25"
           >
             <option value="all">Todos los estados</option>
             <option value="completed">Completada</option>
@@ -138,7 +141,7 @@ export function GenerationsHistoryView({
           <select
             value={selectedRoomType}
             onChange={(e) => setSelectedRoomType(e.target.value)}
-            className="h-10 rounded-md border bg-background px-3 py-1 text-sm shadow-xs focus:outline-hidden"
+            className="h-10 rounded-md border border-input bg-background px-3 py-1 text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-duration-control)] ease-[var(--motion-ease-out)] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25"
           >
             <option value="all">Todas las estancias</option>
             {availableRoomTypes.map((type) => (
@@ -155,7 +158,7 @@ export function GenerationsHistoryView({
               onClick={clearFilters}
               className="h-10 text-xs text-muted-foreground hover:text-foreground gap-1"
             >
-              <Filter className="size-3.5" />
+              <ProductIcon icon={Filter} className="size-3.5" />
               Limpiar
             </Button>
           )}
@@ -173,7 +176,7 @@ export function GenerationsHistoryView({
       {/* Lista de Generaciones */}
       {filteredGenerations.length === 0 ? (
         <EmptyState
-          icon={Sparkles}
+          icon={FrameAlt}
           title={hasActiveFilters ? "Sin resultados" : "Aún no hay generaciones"}
           description={
             hasActiveFilters
@@ -251,7 +254,7 @@ export function GenerationsHistoryView({
                   </div>
 
                   <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Clock className="size-3" />
+                    <ProductIcon icon={Clock} className="size-3" />
                     <span>
                       {new Date(item.createdAt).toLocaleDateString("es-ES", {
                         day: "numeric",
@@ -280,7 +283,7 @@ export function GenerationsHistoryView({
                       onClick={() => setActiveComparison(item)}
                       className="text-xs h-8 gap-1"
                     >
-                      <SlidersHorizontal className="size-3.5" />
+                      <ProductIcon icon={ControlSlider} className="size-3.5" />
                       Antes / Después
                     </Button>
                   )}
@@ -290,8 +293,12 @@ export function GenerationsHistoryView({
                       download={`generacion-${item.id}.png`}
                       title="Descargar imagen decorada"
                     >
-                      <Button variant="ghost" size="sm" className="size-8 p-0">
-                        <Download className="size-3.5" />
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Descargar imagen decorada"
+                      >
+                        <ProductIcon icon={Download} className="size-3.5" />
                       </Button>
                     </a>
                   )}
@@ -302,7 +309,7 @@ export function GenerationsHistoryView({
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 ml-auto"
                 >
                   <span>Ver estancia</span>
-                  <ExternalLink className="size-3" />
+                  <ProductIcon icon={OpenNewWindow} className="size-3" />
                 </Link>
               </div>
             </Card>
@@ -325,7 +332,7 @@ export function GenerationsHistoryView({
             <div className="flex items-center gap-3">
               <a href={activeComparison.outputImageUrl} download={`generacion-${activeComparison.id}.png`}>
                 <Button size="sm" className="gap-1.5 text-xs">
-                  <Download className="size-3.5" />
+                  <ProductIcon icon={Download} className="size-3.5" />
                   Descargar PNG
                 </Button>
               </a>
@@ -335,7 +342,7 @@ export function GenerationsHistoryView({
                 onClick={() => setActiveComparison(null)}
                 className="gap-1.5 text-xs"
               >
-                <X className="size-4" />
+                <ProductIcon icon={Xmark} className="size-4" />
                 Cerrar (ESC)
               </Button>
             </div>
