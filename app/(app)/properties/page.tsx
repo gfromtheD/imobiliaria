@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Plus } from "iconoir-react";
 
-import { OnboardingGuide } from "@/components/onboarding/onboarding-guide";
+import { PropertiesEmptyState } from "@/components/properties/properties-empty-state";
 import { PropertyCard } from "@/components/properties/property-card";
 import { Button } from "@/components/ui/button";
+import { ProductIcon } from "@/components/ui/product-icon";
 import { listProperties } from "@/services/properties";
 
 export const metadata: Metadata = {
@@ -14,25 +16,30 @@ export default async function PropertiesPage() {
   const properties = await listProperties();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl space-y-10">
+      <div className="flex flex-col gap-5 border-b border-border pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Propiedades</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gestiona tus inmuebles y genera imágenes decoradas con IA.
+          <p className="text-[0.6875rem] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+            Cartera inmobiliaria
+          </p>
+          <h1 className="mt-3 text-title font-medium">Propiedades</h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Organiza los inmuebles y prepara cada espacio a partir de sus
+            fotografías originales.
           </p>
         </div>
         <Link href="/properties/new">
-          <Button>Crear propiedad</Button>
+          <Button>
+            <ProductIcon icon={Plus} className="size-4" />
+            Crear propiedad
+          </Button>
         </Link>
       </div>
 
       {properties.length === 0 ? (
-        <div className="space-y-6">
-          <OnboardingGuide />
-        </div>
+        <PropertiesEmptyState />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {properties.map((property) => (
             <PropertyCard
               key={property.id}
