@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, Plus } from "iconoir-react";
 
 import { RoomCard } from "@/components/rooms/room-card";
+import { RoomsEmptyState } from "@/components/rooms/rooms-empty-state";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { ProductIcon } from "@/components/ui/product-icon";
 import { getProperty } from "@/services/properties";
-import { listRooms } from "@/services/rooms";
+import { getRoomImageUrl, listRooms } from "@/services/rooms";
 
 export const metadata: Metadata = {
   title: "Habitaciones",
@@ -25,48 +27,54 @@ export default async function RoomsPage({
   }
 
   const rooms = await listRooms(propertyId);
+  const roomsWithImages = await Promise.all(
+    rooms.map(async (room) => ({
+      ...room,
+      imageUrl: room.original_image_path
+        ? await getRoomImageUrl(room.id)
+        : null,
+    })),
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link
-            href={`/properties/${propertyId}`}
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            ← {property.title}
+    <div className="mx-auto max-w-7xl space-y-10">
+      <div className="border-b border-border pb-8">
+        <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
+          <Link href={`/properties/${propertyId}`}>
+            <ProductIcon icon={ArrowLeft} className="size-4" />
+            {property.title}
           </Link>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Habitaciones
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sube las fotografías de las habitaciones vacías de esta propiedad.
-          </p>
+        </Button>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-label">Material visual de la propiedad</p>
+            <h1 className="mt-3 text-title font-medium">Habitaciones</h1>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Cada estancia conserva su fotografía original como punto de
+              partida para la decoración.
+            </p>
+          </div>
+          <Button asChild>
+            <Link href={`/properties/${propertyId}/rooms/new`}>
+              <ProductIcon icon={Plus} className="size-4" />
+              Añadir habitación
+            </Link>
+          </Button>
         </div>
-        <Link href={`/properties/${propertyId}/rooms/new`}>
-          <Button>Añadir habitación</Button>
-        </Link>
       </div>
 
       {rooms.length === 0 ? (
-        <EmptyState
-          title="Aún no hay habitaciones"
-          description="Paso 2: Sube la primera fotografía de una estancia vacía (salón, dormitorio, cocina...) para desbloquear la decoración con IA."
-          action={
-            <Link href={`/properties/${propertyId}/rooms/new`}>
-              <Button size="lg">Subir primera habitación</Button>
-            </Link>
-          }
-        />
+        <RoomsEmptyState propertyId={propertyId} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {roomsWithImages.map((room) => (
             <RoomCard
               key={room.id}
               id={room.id}
               propertyId={propertyId}
               roomType={room.room_type}
               hasImage={room.original_image_path !== null}
+              imageUrl={room.imageUrl}
               createdAt={room.created_at}
             />
           ))}

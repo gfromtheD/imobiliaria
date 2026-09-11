@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "iconoir-react";
 
 import { RoomUploadForm } from "@/components/rooms/room-upload-form";
+import { Button } from "@/components/ui/button";
+import { ProductIcon } from "@/components/ui/product-icon";
 import { getProperty } from "@/services/properties";
 
 export const metadata: Metadata = {
@@ -22,19 +25,21 @@ export default async function NewRoomPage({
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <Link
-          href={`/properties/${propertyId}/rooms`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← {property.title} · Habitaciones
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Nueva habitación
+        <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
+          <Link href={`/properties/${propertyId}/rooms`}>
+            <ProductIcon icon={ArrowLeft} className="size-4" />
+            {property.title}
+          </Link>
+        </Button>
+        <p className="text-label">Nueva habitación</p>
+        <h1 className="mt-3 text-title font-medium">
+          Añade el material de partida.
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Registra la estancia y sube su fotografía vacía.
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+          Identifica la estancia y sube una única fotografía original para
+          preparar su decoración.
         </p>
       </div>
       <RoomUploadForm propertyId={propertyId} />
