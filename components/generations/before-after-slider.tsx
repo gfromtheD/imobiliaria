@@ -25,7 +25,7 @@ export function BeforeAfterSlider({
   originalUrl,
   stagedUrl,
   altOriginal = "Habitación original",
-  altStaged = "Habitación con Virtual Staging",
+  altStaged = "Habitación transformada por ambivio",
   title,
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState<number>(50);
@@ -111,7 +111,7 @@ export function BeforeAfterSlider({
           />
         ) : (
           <>
-            {/* Imagen Después (Virtual Staging) en fondo */}
+            {/* Imagen posterior en fondo */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={stagedUrl}

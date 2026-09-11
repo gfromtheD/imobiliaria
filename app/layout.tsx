@@ -18,11 +18,11 @@ const chillax = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: "Virtual Staging",
-    template: "%s · Virtual Staging",
+    default: "ambivio",
+    template: "%s · ambivio",
   },
   description:
-    "Virtual staging con IA para pequeñas inmobiliarias: decora tus fotografías de inmuebles vacíos.",
+    "Virtual staging inmobiliario para preparar fotografías de inmuebles con precisión.",
 };
 
 export default function RootLayout({
