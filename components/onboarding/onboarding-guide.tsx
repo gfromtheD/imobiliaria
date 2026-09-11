@@ -43,7 +43,7 @@ export function OnboardingGuide() {
           <ProductIcon icon={FrameAlt} className="size-6" />
         </div>
         <CardTitle className="text-xl sm:text-2xl font-semibold">
-          ¡Te damos la bienvenida a Virtual Staging!
+          Te damos la bienvenida a ambivio
         </CardTitle>
         <CardDescription className="max-w-xl mx-auto text-sm text-muted-foreground">
           Transforma habitaciones vacías en espacios decorados y atractivos en 3 sencillos pasos.
