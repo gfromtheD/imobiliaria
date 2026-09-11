@@ -25,6 +25,9 @@ coverage/
 playwright-report/
 test-results/
 
+# Manual visual benchmark inputs and results (local property data)
+benchmarks/
+
 # Logs
 *.log
 npm-debug.log*
