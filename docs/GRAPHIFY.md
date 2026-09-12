@@ -73,6 +73,10 @@ El análisis es 100% local. La extracción de código usa AST y no requiere ning
 - El grafo queda "stale" tras cambios de código hasta correr `graphify update .`; `GRAPH_REPORT.md` registra el commit con el que fue construido.
 - El análisis del reporte es un resumen automático; las decisiones de arquitectura se toman según `docs/` y los humanos.
 
+### Pendiente no bloqueante — RoomImages
+
+El cierre técnico de RoomImages no pudo actualizar el grafo porque el binario `graphify` no está disponible en el entorno de trabajo. Ejecutar `graphify update .` cuando esté instalado para incorporar `room_images`, `source_image_id` y el worker `process-generation`. No bloquea el despliegue ni la integración: la fuente de verdad sigue siendo `main`, las migraciones Cloud y las pruebas E2E.
+
 ## 9. Instalación (mantenimiento)
 
 ```bash
