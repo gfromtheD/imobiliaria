@@ -38,6 +38,10 @@ function mapGenerationRpcError(errorMessage: string | null) {
     return "No tienes créditos suficientes. Añade créditos para continuar.";
   if (errorMessage.includes("image_required"))
     return "La habitación necesita una fotografía original.";
+  if (errorMessage.includes("source_image_required"))
+    return "Selecciona la fotografía original que quieres generar.";
+  if (errorMessage.includes("source_image_not_found"))
+    return "La fotografía seleccionada ya no está disponible.";
   if (errorMessage.includes("style_not_found"))
     return "El estilo seleccionado ya no está disponible.";
   if (errorMessage.includes("hourly_limit_reached"))
@@ -122,6 +126,7 @@ export async function createGenerationAction(
   void _prevState;
 
   const styleId = String(formData.get("style_id") ?? "");
+  const sourceImageId = String(formData.get("source_image_id") ?? "");
   if (!styleId) {
     return { error: "Selecciona un estilo.", generation: null };
   }
@@ -130,6 +135,7 @@ export async function createGenerationAction(
   const { data, error } = await supabase.rpc("create_generation", {
     p_room_id: roomId,
     p_style_id: styleId,
+    p_source_image_id: sourceImageId || undefined,
     p_parameters: {},
   });
 
@@ -221,11 +227,13 @@ export async function listAllGenerations(): Promise<AllGenerationsItem[]> {
       rooms!inner (
         id,
         room_type,
-        original_image_path,
         properties!inner (
           id,
           title
         )
+      ),
+      room_images!generations_source_image_id_fkey (
+        storage_path
       ),
       styles (
         id,
@@ -251,8 +259,8 @@ export async function listAllGenerations(): Promise<AllGenerationsItem[]> {
       }
 
       let originalImageUrl: string | null = null;
-      if (row.rooms?.original_image_path) {
-        originalImageUrl = await getOriginalImageUrlByPath(row.rooms.original_image_path);
+      if (row.room_images?.storage_path) {
+        originalImageUrl = await getOriginalImageUrlByPath(row.room_images.storage_path);
       }
 
       return {

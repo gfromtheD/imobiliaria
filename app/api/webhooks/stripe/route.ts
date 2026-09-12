@@ -56,9 +56,14 @@ export async function POST(req: Request) {
             typeof session.customer === "string"
               ? session.customer
               : session.customer?.id ?? null;
+          if (!customerId) {
+            return NextResponse.json(
+              { error: "Checkout sin cliente de Stripe." },
+              { status: 400 },
+            );
+          }
 
           // Recarga atómica e idempotente
-          // @ts-expect-error - RPC apply_credit_purchase declared in DB migration
           const { error } = await admin.rpc("apply_credit_purchase", {
             p_org_id: orgId,
             p_credits: credits,
@@ -100,20 +105,19 @@ export async function POST(req: Request) {
               ? invoiceSub
               : invoiceSub?.id ?? null;
 
-          // @ts-expect-error - RPC sync_stripe_subscription declared in DB migration
-          const { error } = await admin.rpc("sync_stripe_subscription", {
-            p_stripe_customer_id: customerId,
-            p_stripe_subscription_id: subId,
-            p_status: "past_due",
-            p_plan: "basic",
-            p_period_start: null,
-            p_period_end: null,
-            p_credits_to_add: 0,
-            p_event_id: event.id,
-          });
+          if (subId) {
+            const { error } = await admin.rpc("sync_stripe_subscription", {
+              p_stripe_customer_id: customerId,
+              p_stripe_subscription_id: subId,
+              p_status: "past_due",
+              p_plan: "basic",
+              p_credits_to_add: 0,
+              p_event_id: event.id,
+            });
 
-          if (error) {
-            console.error("Error sincronizando invoice.payment_failed:", error);
+            if (error) {
+              console.error("Error sincronizando invoice.payment_failed:", error);
+            }
           }
         }
         break;
@@ -126,7 +130,6 @@ export async function POST(req: Request) {
         const customerId =
           typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
-        // @ts-expect-error - RPC sync_stripe_subscription declared in DB migration
         const { error } = await admin.rpc("sync_stripe_subscription", {
           p_stripe_customer_id: customerId,
           p_stripe_subscription_id: sub.id,
@@ -139,10 +142,10 @@ export async function POST(req: Request) {
           p_plan: "basic",
           p_period_start: (sub as unknown as { current_period_start?: number }).current_period_start
             ? new Date((sub as unknown as { current_period_start: number }).current_period_start * 1000).toISOString()
-            : null,
+            : undefined,
           p_period_end: (sub as unknown as { current_period_end?: number }).current_period_end
             ? new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString()
-            : null,
+            : undefined,
           p_credits_to_add: 0,
           p_event_id: event.id,
         });

@@ -14,9 +14,14 @@ $OrganizationId = $null
 $PropertyId = $null
 $OriginalImagePath = $null
 $OutputImagePath = $null
+$EnvFile = if ($env:SUPABASE_E2E_ENV_FILE) {
+  $env:SUPABASE_E2E_ENV_FILE
+} else {
+  Join-Path $PSScriptRoot "..\..\.env.local"
+}
 
 function Read-EnvValue([string]$Name) {
-  $line = Get-Content (Join-Path $PSScriptRoot "..\..\.env.local") |
+  $line = Get-Content $EnvFile |
     Where-Object { $_ -match ("^" + [regex]::Escape($Name) + "=") } |
     Select-Object -First 1
   if (-not $line) { throw "$Name no está configurada en .env.local." }
@@ -41,7 +46,9 @@ function Assert([bool]$Condition, [string]$Message) {
 function Invoke-Api([string]$Method, [string]$Path, [string]$BearerToken, $Body = $null, [string]$ContentType = "application/json", [string]$ApiKey = $AnonKey) {
   $headers = @{ apikey = $ApiKey; Authorization = "Bearer $BearerToken"; Prefer = "return=representation" }
   try {
-    $response = Invoke-WebRequest -Uri "$BaseUrl$Path" -Method $Method -Headers $headers -Body $Body -ContentType $ContentType -SkipHttpErrorCheck
+    $request = @{ Uri = "$BaseUrl$Path"; Method = $Method; Headers = $headers; SkipHttpErrorCheck = $true }
+    if ($null -ne $Body) { $request.Body = $Body; $request.ContentType = $ContentType }
+    $response = Invoke-WebRequest @request
     $parsed = $null
     if ($response.Content) { try { $parsed = $response.Content | ConvertFrom-Json } catch { $parsed = $response.Content } }
     return [pscustomobject]@{ Status = [int]$response.StatusCode; Body = $parsed; Raw = $response.Content }

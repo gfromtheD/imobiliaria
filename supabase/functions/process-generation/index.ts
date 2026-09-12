@@ -184,28 +184,40 @@ Deno.serve(async (req) => {
   const parameters = (claimed.parameters ?? {}) as Record<string, unknown>;
 
   try {
-    // 2. Contexto del job (room + style).
+    // 2. Contexto del job (room + source image + style). The generation keeps
+    // its immutable source_image_id, so another ready image in the same room
+    // can never be selected accidentally by a retry.
     const room = await getRow(
       apiUrl, auth, apikey, "rooms",
-      "room_type,property_id,organization_id,original_image_path",
+      "room_type,property_id,organization_id",
       String(claimed.room_id),
+    );
+    const sourceImage = await getRow(
+      apiUrl, auth, apikey, "room_images",
+      "id,room_id,organization_id,storage_path,status",
+      String(claimed.source_image_id ?? ""),
     );
     const style = await getRow(
       apiUrl, auth, apikey, "styles",
       "ai_preset,name",
       String(claimed.style_id),
     );
-    if (!room || !style) {
+    if (!room || !sourceImage || !style) {
       const err = new Error("missing room or style context") as Error & { code?: string; retryable?: boolean };
       err.code = "missing_context";
       err.retryable = false;
       throw err;
     }
 
-    const originalImagePath = String(room.original_image_path ?? "");
-    if (!originalImagePath) {
+    if (
+      String(sourceImage.room_id) !== String(claimed.room_id) ||
+      String(sourceImage.organization_id) !== String(room.organization_id) ||
+      String(sourceImage.status) !== "ready"
+    ) {
       throw new ProviderError("missing_original_image", "Original image is missing", { terminal: true });
     }
+    const originalImagePath = String(sourceImage.storage_path ?? "");
+    if (!originalImagePath) throw new ProviderError("missing_original_image", "Original image is missing", { terminal: true });
 
     // 3. Instrucciones versionadas + contrato de proveedor. El loader conserva
     // los bytes en el worker y nunca crea una signed URL persistente.

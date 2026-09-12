@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       app_config: {
@@ -65,6 +40,7 @@ export type Database = {
           provider_job_id: string | null
           retry_count: number
           room_id: string
+          source_image_id: string
           started_at: string | null
           status: string
           style_id: string
@@ -85,6 +61,7 @@ export type Database = {
           provider_job_id?: string | null
           retry_count?: number
           room_id: string
+          source_image_id: string
           started_at?: string | null
           status?: string
           style_id: string
@@ -105,6 +82,7 @@ export type Database = {
           provider_job_id?: string | null
           retry_count?: number
           room_id?: string
+          source_image_id?: string
           started_at?: string | null
           status?: string
           style_id?: string
@@ -123,6 +101,13 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_source_image_id_fkey"
+            columns: ["source_image_id"]
+            isOneToOne: false
+            referencedRelation: "room_images"
             referencedColumns: ["id"]
           },
           {
@@ -259,9 +244,94 @@ export type Database = {
           },
         ]
       }
+      room_deletion_requests: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_deletion_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_deletion_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_images: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          ready_at: string | null
+          room_id: string
+          status: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          ready_at?: string | null
+          room_id: string
+          status?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          ready_at?: string | null
+          room_id?: string
+          status?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_images_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_images_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           created_at: string
+          deletion_requested_at: string | null
           id: string
           notes: string | null
           organization_id: string
@@ -271,6 +341,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deletion_requested_at?: string | null
           id?: string
           notes?: string | null
           organization_id: string
@@ -280,6 +351,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deletion_requested_at?: string | null
           id?: string
           notes?: string | null
           organization_id?: string
@@ -303,6 +375,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_events: {
+        Row: {
+          event_type: string
+          id: string
+          processed_at: string
+        }
+        Insert: {
+          event_type: string
+          id: string
+          processed_at?: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          processed_at?: string
+        }
+        Relationships: []
       }
       styles: {
         Row: {
@@ -466,7 +556,46 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cancel_generation: { Args: { p_generation_id: string }; Returns: Json }
+      apply_credit_purchase: {
+        Args: {
+          p_credits: number
+          p_event_id?: string
+          p_org_id: string
+          p_plan?: string
+          p_stripe_customer_id: string
+        }
+        Returns: Json
+      }
+      cancel_generation: {
+        Args: { p_generation_id: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          locked_at: string | null
+          organization_id: string
+          output_image_path: string | null
+          parameters: Json
+          prompt_version: string
+          provider: string
+          provider_job_id: string | null
+          retry_count: number
+          room_id: string
+          source_image_id: string
+          started_at: string | null
+          status: string
+          style_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "generations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       claim_generation: { Args: { p_generation_id: string }; Returns: Json }
       claim_job: {
         Args: { p_job_id: string; p_worker?: string }
@@ -528,8 +657,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      complete_room_deletion: {
+        Args: { p_deletion_id: string }
+        Returns: boolean
+      }
+      complete_room_image_deletion: {
+        Args: { p_room_image_id: string }
+        Returns: boolean
+      }
       create_generation: {
-        Args: { p_parameters?: Json; p_room_id: string; p_style_id: string }
+        Args: {
+          p_parameters?: Json
+          p_room_id: string
+          p_source_image_id?: string
+          p_style_id: string
+        }
         Returns: {
           completed_at: string | null
           created_at: string
@@ -545,6 +687,7 @@ export type Database = {
           provider_job_id: string | null
           retry_count: number
           room_id: string
+          source_image_id: string
           started_at: string | null
           status: string
           style_id: string
@@ -559,11 +702,15 @@ export type Database = {
       }
       create_room: {
         Args: {
-          p_file_name: string
+          p_file_name?: string
           p_notes?: string
           p_property_id: string
           p_room_type: string
         }
+        Returns: Json
+      }
+      create_room_image: {
+        Args: { p_file_name: string; p_room_id: string }
         Returns: Json
       }
       current_org_id: { Args: never; Returns: string }
@@ -606,10 +753,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      finalize_room_image_upload: {
+        Args: { p_room_image_id: string; p_upload_path: string }
+        Returns: {
+          created_at: string
+          id: string
+          organization_id: string
+          ready_at: string | null
+          room_id: string
+          status: string
+          storage_path: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "room_images"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       finalize_room_upload: {
         Args: { p_room_id: string; p_upload_path: string }
         Returns: {
           created_at: string
+          deletion_requested_at: string | null
           id: string
           notes: string | null
           organization_id: string
@@ -624,9 +791,43 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      prepare_room_deletion: { Args: { p_room_id: string }; Returns: Json }
+      prepare_room_image_deletion: {
+        Args: { p_room_image_id: string }
+        Returns: Json
+      }
       process_generation_jobs: { Args: { p_limit?: number }; Returns: number }
       process_jobs: { Args: { p_limit?: number }; Returns: number }
-      retry_generation: { Args: { p_generation_id: string }; Returns: Json }
+      retry_generation: {
+        Args: { p_generation_id: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          locked_at: string | null
+          organization_id: string
+          output_image_path: string | null
+          parameters: Json
+          prompt_version: string
+          provider: string
+          provider_job_id: string | null
+          retry_count: number
+          room_id: string
+          source_image_id: string
+          started_at: string | null
+          status: string
+          style_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "generations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       retry_job: {
         Args: { p_job_id: string }
         Returns: {
@@ -648,6 +849,38 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "image_jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      sync_stripe_subscription: {
+        Args: {
+          p_credits_to_add?: number
+          p_event_id?: string
+          p_period_end?: string
+          p_period_start?: string
+          p_plan: string
+          p_status: string
+          p_stripe_customer_id: string
+          p_stripe_subscription_id: string
+        }
+        Returns: Json
+      }
+      update_room: {
+        Args: { p_notes?: string; p_room_id: string; p_room_type: string }
+        Returns: {
+          created_at: string
+          deletion_requested_at: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          original_image_path: string | null
+          property_id: string
+          room_type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rooms"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -780,9 +1013,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
