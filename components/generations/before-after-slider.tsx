@@ -19,6 +19,7 @@ export interface BeforeAfterSliderProps {
   altOriginal?: string;
   altStaged?: string;
   title?: string;
+  showDownload?: boolean;
 }
 
 export function BeforeAfterSlider({
@@ -27,6 +28,7 @@ export function BeforeAfterSlider({
   altOriginal = "Habitación original",
   altStaged = "Habitación transformada por ambivio",
   title,
+  showDownload = true,
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState<number>(50);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -47,8 +49,29 @@ export function BeforeAfterSlider({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
     const container = isFullscreen ? fullscreenContainerRef.current : containerRef.current;
     handleMove(e.clientX, container);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 10 : 2;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setSliderPosition((position) => Math.max(0, position - step));
+    }
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setSliderPosition((position) => Math.min(100, position + step));
+    }
+    if (e.key === "Home") {
+      e.preventDefault();
+      setSliderPosition(0);
+    }
+    if (e.key === "End") {
+      e.preventDefault();
+      setSliderPosition(100);
+    }
   };
 
   useEffect(() => {
@@ -91,7 +114,15 @@ export function BeforeAfterSlider({
       <div
         ref={activeRef}
         onPointerDown={handlePointerDown}
-        className={`relative select-none overflow-hidden rounded-lg border bg-muted cursor-ew-resize group ${
+        onKeyDown={handleKeyDown}
+        role={viewMode === "slider" ? "slider" : undefined}
+        tabIndex={viewMode === "slider" ? 0 : -1}
+        aria-label={viewMode === "slider" ? "Comparación entre fotografía original y resultado" : undefined}
+        aria-valuemin={viewMode === "slider" ? 0 : undefined}
+        aria-valuemax={viewMode === "slider" ? 100 : undefined}
+        aria-valuenow={viewMode === "slider" ? sliderPosition : undefined}
+        aria-valuetext={viewMode === "slider" ? `${sliderPosition}% fotografía original visible` : undefined}
+        className={`relative select-none overflow-hidden rounded-lg border bg-muted cursor-ew-resize group touch-pan-y outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
           fullscreen ? "h-[75vh] w-full max-w-6xl mx-auto flex items-center justify-center" : "aspect-16/10 w-full"
         }`}
       >
@@ -121,7 +152,7 @@ export function BeforeAfterSlider({
 
             {/* Imagen Antes (Original) recortada */}
             <div
-              className="absolute inset-0 size-full overflow-hidden pointer-events-none"
+              className="absolute inset-0 size-full overflow-hidden pointer-events-none transition-[clip-path] duration-[var(--motion-duration-control)] ease-[var(--motion-ease-out)] motion-reduce:transition-none"
               style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -212,12 +243,14 @@ export function BeforeAfterSlider({
             Pantalla completa
           </Button>
 
-          <a href={stagedUrl} download="staging-decorado.png">
-            <Button size="sm" className="text-xs h-8 gap-1.5">
-              <ProductIcon icon={Download} className="size-3.5" />
-              Descargar PNG
-            </Button>
-          </a>
+          {showDownload && (
+            <a href={stagedUrl} download="staging-decorado.png">
+              <Button size="sm" className="text-xs h-8 gap-1.5">
+                <ProductIcon icon={Download} className="size-3.5" />
+                Descargar PNG
+              </Button>
+            </a>
+          )}
         </div>
       </div>
 
@@ -235,12 +268,14 @@ export function BeforeAfterSlider({
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <a href={stagedUrl} download="staging-decorado.png">
-                <Button size="sm" className="gap-1.5 text-xs">
-                  <ProductIcon icon={Download} className="size-3.5" />
-                  Descargar PNG
-                </Button>
-              </a>
+              {showDownload && (
+                <a href={stagedUrl} download="staging-decorado.png">
+                  <Button size="sm" className="gap-1.5 text-xs">
+                    <ProductIcon icon={Download} className="size-3.5" />
+                    Descargar PNG
+                  </Button>
+                </a>
+              )}
               <Button
                 variant="outline"
                 size="sm"

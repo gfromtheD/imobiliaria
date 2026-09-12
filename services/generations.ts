@@ -22,6 +22,7 @@ export type CreateGenerationState = {
 export type GenerationListItem = {
   id: string;
   style_id: string;
+  source_image_id: string;
   status: string;
   provider: string;
   output_image_path: string | null;
@@ -91,7 +92,7 @@ export async function listGenerations(roomId: string) {
   const { data, error } = await supabase
     .from("generations")
     .select(
-      "id, style_id, status, provider, output_image_path, error_code, error_message, retry_count, created_at, completed_at",
+      "id, style_id, source_image_id, status, provider, output_image_path, error_code, error_message, retry_count, created_at, completed_at",
     )
     .eq("room_id", roomId)
     .order("created_at", { ascending: false });
@@ -175,6 +176,29 @@ export async function cancelGenerationAction(generationId: string): Promise<{
   if (error) {
     return {
       error: "No se pudo cancelar la generación. Inténtalo de nuevo.",
+    };
+  }
+
+  return { error: null };
+}
+
+export async function retryGenerationAction(generationId: string): Promise<{
+  error: string | null;
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("retry_generation", {
+    p_generation_id: generationId,
+  });
+
+  if (error) {
+    return {
+      error: "No se pudo reintentar la generación. Puede que ya no tenga intentos disponibles.",
+    };
+  }
+
+  if (!data) {
+    return {
+      error: "Esta generación ya no admite otro intento.",
     };
   }
 

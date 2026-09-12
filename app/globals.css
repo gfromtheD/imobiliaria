@@ -156,3 +156,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes ambivio-generation-line {
+  0%, 100% { transform: scaleY(0.18); transform-origin: center; opacity: 0.45; }
+  50% { transform: scaleY(1); transform-origin: center; opacity: 1; }
+}
+
+@keyframes ambivio-processing-mark {
+  to { transform: rotate(180deg); }
+}
+
+.ambivio-generation-line {
+  animation: ambivio-generation-line 1.8s var(--motion-ease-in-out) infinite;
+}
+
+.ambivio-processing-mark {
+  animation: ambivio-processing-mark 1.2s linear infinite;
+}

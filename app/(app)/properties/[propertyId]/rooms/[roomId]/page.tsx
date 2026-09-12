@@ -53,10 +53,16 @@ export default async function RoomDetailPage({
     })),
   );
 
+  const imageUrlById = new Map(
+    imageViews.map((image) => [image.id, image.signedUrl]),
+  );
+
   const generationViews = await Promise.all(
     generations.map(async (generation) => ({
       id: generation.id,
       styleId: generation.style_id,
+      sourceImageId: generation.source_image_id,
+      sourceImageUrl: imageUrlById.get(generation.source_image_id) ?? null,
       status: generation.status,
       outputImageUrl:
         generation.status === "completed" && generation.output_image_path
