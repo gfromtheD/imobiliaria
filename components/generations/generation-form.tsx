@@ -23,12 +23,14 @@ const initialState: CreateGenerationState = { error: null, generation: null };
 
 export function GenerationForm({
   roomId,
+  sourceImageId,
   styles,
   disabled,
   disabledReason,
   onCreated,
 }: {
   roomId: string;
+  sourceImageId: string | null;
   styles: { id: string; name: string; description: string | null }[];
   disabled: boolean;
   disabledReason: string | null;
@@ -50,6 +52,7 @@ export function GenerationForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="style_id" value={styleId} />
+      <input type="hidden" name="source_image_id" value={sourceImageId ?? ""} />
       <div className="space-y-2">
         <Label htmlFor="style">Estilo de decoración</Label>
         <Select value={styleId} onValueChange={setStyleId}>
@@ -67,7 +70,7 @@ export function GenerationForm({
       </div>
 
       {(state.error || disabledReason) && (
-        <p className="text-sm text-destructive">{state.error ?? disabledReason}</p>
+        <p role="alert" className="text-sm text-destructive">{state.error ?? disabledReason}</p>
       )}
 
       <Button type="submit" disabled={pending || disabled || !styleId} className="gap-2">

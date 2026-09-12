@@ -52,14 +52,14 @@ function statusVariant(status: string) {
 
 export function GenerationsSection({
   roomId,
-  hasImage,
+  sourceImageId,
   originalImageUrl,
   styles,
   credits,
   generations,
 }: {
   roomId: string;
-  hasImage: boolean;
+  sourceImageId: string | null;
   originalImageUrl?: string | null;
   styles: { id: string; name: string; description: string | null }[];
   credits: { creditsAvailable: number; creditsReserved: number } | null;
@@ -86,8 +86,8 @@ export function GenerationsSection({
   const creditsReserved = credits?.creditsReserved ?? 0;
 
   let disabledReason: string | null = null;
-  if (!hasImage) {
-    disabledReason = "La habitación necesita una fotografía original.";
+  if (!sourceImageId) {
+    disabledReason = "Selecciona una fotografía original lista para generar.";
   } else if (creditsAvailable <= 0) {
     disabledReason = "No tienes créditos disponibles.";
   }
@@ -124,8 +124,9 @@ export function GenerationsSection({
         <CardContent>
           <GenerationForm
             roomId={roomId}
+            sourceImageId={sourceImageId}
             styles={styles}
-            disabled={!hasImage || creditsAvailable <= 0}
+            disabled={!sourceImageId || creditsAvailable <= 0}
             disabledReason={disabledReason}
             onCreated={() => router.refresh()}
           />

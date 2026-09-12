@@ -8,7 +8,7 @@ import { RoomsEmptyState } from "@/components/rooms/rooms-empty-state";
 import { Button } from "@/components/ui/button";
 import { ProductIcon } from "@/components/ui/product-icon";
 import { getProperty } from "@/services/properties";
-import { getRoomImageUrl, listRooms } from "@/services/rooms";
+import { getRoomImageSignedUrl, listRoomImages, listRooms } from "@/services/rooms";
 
 export const metadata: Metadata = {
   title: "Habitaciones",
@@ -28,12 +28,15 @@ export default async function RoomsPage({
 
   const rooms = await listRooms(propertyId);
   const roomsWithImages = await Promise.all(
-    rooms.map(async (room) => ({
-      ...room,
-      imageUrl: room.original_image_path
-        ? await getRoomImageUrl(room.id)
-        : null,
-    })),
+    rooms.map(async (room) => {
+      const images = await listRoomImages(room.id);
+      const firstReady = images.find((image) => image.status === "ready");
+      return {
+        ...room,
+        hasReadyImage: Boolean(firstReady),
+        imageUrl: firstReady ? await getRoomImageSignedUrl(firstReady.id) : null,
+      };
+    }),
   );
 
   return (
@@ -73,7 +76,7 @@ export default async function RoomsPage({
               id={room.id}
               propertyId={propertyId}
               roomType={room.room_type}
-              hasImage={room.original_image_path !== null}
+              hasImage={room.hasReadyImage}
               imageUrl={room.imageUrl}
               createdAt={room.created_at}
             />
