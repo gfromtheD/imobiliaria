@@ -102,6 +102,9 @@ try {
   $style = First (Invoke-Api 'GET' '/rest/v1/styles?select=id&active=eq.true&limit=1' $a.Token).Body
   $generation = Invoke-Rpc $a.Token 'create_generation' @{ p_room_id=$room.room_id; p_style_id=$style.id; p_source_image_id=$second.image_id; p_parameters=@{} }
   Assert ($generation.Status -eq 200 -and $generation.Body.source_image_id -eq $second.image_id) 'Generation queda vinculada a la imagen seleccionada'
+  $workerRun = Invoke-Api 'POST' '/functions/v1/process-generation' $ServiceKey (@{ generation_id=$generation.Body.id } | ConvertTo-Json -Compress) 'application/json' $ServiceKey
+  $completedGeneration = First (Invoke-Api 'GET' "/rest/v1/generations?select=status,source_image_id,output_image_path&id=eq.$($generation.Body.id)" $a.Token).Body
+  Assert ($workerRun.Status -eq 200 -and $workerRun.Body.ok -eq $true -and $completedGeneration.status -eq 'completed' -and $completedGeneration.source_image_id -eq $second.image_id -and [bool]$completedGeneration.output_image_path) 'worker Cloud procesa exactamente la imagen seleccionada por source_image_id'
   $ambiguous = Invoke-Rpc $a.Token 'create_generation' @{ p_room_id=$room.room_id; p_style_id=$style.id; p_parameters=@{} }
   Assert ($ambiguous.Raw -match 'source_image_required') 'dos imágenes nunca se resuelven implícitamente'
   $blockedImageDelete = Invoke-Rpc $a.Token 'prepare_room_image_deletion' @{ p_room_image_id=$second.image_id }
@@ -118,8 +121,9 @@ try {
   Assert (@($foreignImages.Body).Count -eq 0 -and $foreignCreate.Raw -match 'room_not_found' -and $foreignFinalize.Raw -match 'room_image_not_found' -and $foreignUpdate.Raw -match 'room_not_found_or_deleting' -and $foreignDelete.Raw -match 'room_not_found' -and $foreignGeneration.Raw -match 'room_not_found') 'RLS y RPC bloquean todos los IDs de otra organización'
   Assert ($foreignReadObject.Status -notin 200,201 -and $foreignWriteObject.Status -notin 200,201) 'Storage original bloquea lectura y escritura cross-tenant'
 
-  $cancelGeneration = Invoke-Rpc $a.Token 'cancel_generation' @{ p_generation_id=$generation.Body.id }
-  $cancelLedger = Invoke-Api 'GET' "/rest/v1/usage_ledger?select=status,credits_used&generation_id=eq.$($generation.Body.id)" $a.Token
+  $cancellableGeneration = Invoke-Rpc $a.Token 'create_generation' @{ p_room_id=$room.room_id; p_style_id=$style.id; p_source_image_id=$firstPending.Body.image_id; p_parameters=@{} }
+  $cancelGeneration = Invoke-Rpc $a.Token 'cancel_generation' @{ p_generation_id=$cancellableGeneration.Body.id }
+  $cancelLedger = Invoke-Api 'GET' "/rest/v1/usage_ledger?select=status,credits_used&generation_id=eq.$($cancellableGeneration.Body.id)" $a.Token
   Assert ($cancelGeneration.Status -eq 200 -and (First $cancelLedger.Body).status -eq 'cancelled' -and [int](First $cancelLedger.Body).credits_used -eq 0) 'cancelación conserva crédito y ledger coherentes'
 
   $deleteRoom = (Invoke-Rpc $a.Token 'create_room' @{ p_property_id=$property.id; p_room_type='cocina' }).Body
