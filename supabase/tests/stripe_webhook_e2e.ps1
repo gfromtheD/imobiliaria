@@ -5,6 +5,11 @@
 param([switch]$KeepData)
 
 $ErrorActionPreference = "Stop"
+$EnvFile = if ($env:SUPABASE_E2E_ENV_FILE) {
+  $env:SUPABASE_E2E_ENV_FILE
+} else {
+  Join-Path $PSScriptRoot "..\..\.env.local"
+}
 $Pass = 0
 $Fail = 0
 $RunId = [guid]::NewGuid().ToString("N").Substring(0, 12)
@@ -13,7 +18,7 @@ $OrganizationId = $null
 $EventId = "evt_e2e_$RunId"
 
 function Read-EnvValue([string]$Name) {
-  $line = Get-Content (Join-Path $PSScriptRoot "..\..\.env.local") |
+  $line = Get-Content $EnvFile |
     Where-Object { $_ -match ("^" + [regex]::Escape($Name) + "=") } |
     Select-Object -Last 1
   if (-not $line) { throw "$Name no está configurada en .env.local." }
