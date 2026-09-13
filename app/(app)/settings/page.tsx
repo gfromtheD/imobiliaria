@@ -2,13 +2,6 @@ import type { Metadata } from "next";
 
 import { BillingSection } from "@/components/billing/billing-section";
 import { SignOutButton } from "@/components/layout/sign-out-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { getBillingData } from "@/services/billing";
 import { getCurrentOrganization, getCurrentUser } from "@/services/organization";
 
@@ -17,17 +10,18 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const user = await getCurrentUser();
-  const organization = await getCurrentOrganization();
-  const { subscription, packages } = await getBillingData();
+  const [user, organization, { subscription, packages }] = await Promise.all([
+    getCurrentUser(),
+    getCurrentOrganization(),
+    getBillingData(),
+  ]);
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tu cuenta y tu organización.
-        </p>
+    <div className="mx-auto max-w-5xl space-y-12">
+      <div className="border-b border-border pb-8">
+        <p className="text-label">Espacio de trabajo</p>
+        <h1 className="mt-3 text-title font-medium">Configuración</h1>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">Gestiona la cuenta, la organización y el uso de Ambivio.</p>
       </div>
 
       <BillingSection
@@ -39,43 +33,25 @@ export default async function SettingsPage() {
         packages={packages}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Organización</CardTitle>
-          <CardDescription>Datos de tu agencia.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
-            <span className="font-medium">Nombre:</span> {organization?.name}
-          </p>
-          <p>
-            <span className="font-medium">Plan:</span>{" "}
-            {organization?.subscriptionPlan ?? "—"}
-          </p>
-          <p>
-            <span className="font-medium">Créditos disponibles:</span>{" "}
-            {organization?.creditsAvailable ?? "—"}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Cuenta</CardTitle>
-          <CardDescription>Tu acceso al producto.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="font-medium">Email:</span> {user?.email}
-            </p>
-            <p>
-              <span className="font-medium">Rol:</span> {user?.role}
-            </p>
-          </div>
-          <SignOutButton />
-        </CardContent>
-      </Card>
+      <section className="grid gap-10 border-y border-border py-8 md:grid-cols-2">
+        <div>
+          <p className="text-label">Organización</p>
+          <h2 className="mt-3 text-heading font-medium">{organization?.name ?? "Tu organización"}</h2>
+          <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Plan</dt><dd className="font-medium capitalize">{organization?.subscriptionPlan ?? "—"}</dd></div>
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Créditos disponibles</dt><dd className="font-medium">{organization?.creditsAvailable ?? "—"}</dd></div>
+          </dl>
+        </div>
+        <div className="md:border-l md:border-border md:pl-10">
+          <p className="text-label">Cuenta</p>
+          <h2 className="mt-3 text-heading font-medium">Tu acceso</h2>
+          <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Email</dt><dd className="max-w-[14rem] truncate font-medium">{user?.email ?? "—"}</dd></div>
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Rol</dt><dd className="font-medium capitalize">{user?.role ?? "—"}</dd></div>
+          </dl>
+          <div className="mt-6"><SignOutButton /></div>
+        </div>
+      </section>
     </div>
   );
 }
