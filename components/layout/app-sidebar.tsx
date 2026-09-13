@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Building, Coins, FrameAlt, Settings } from "iconoir-react";
 
 import { SidebarNavLink } from "@/components/layout/sidebar-nav-link";
+import { AmbivioMark } from "@/components/brand/ambivio-mark";
 import { Badge } from "@/components/ui/badge";
 import { ProductIcon } from "@/components/ui/product-icon";
 import { SUBSCRIPTION_PLAN_LABELS } from "@/lib/domain";
@@ -25,9 +26,10 @@ export function AppSidebar({
       <div className="flex min-h-20 items-center border-b border-sidebar-border px-5">
         <Link
           href="/properties"
-          className="font-heading text-[1.7rem] leading-none tracking-[-0.07em] outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring/30"
+          aria-label="Ambivio · ir a propiedades"
+          className="outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring/30"
         >
-          ambivio
+          <AmbivioMark symbolClassName="size-5" />
         </Link>
       </div>
       <nav aria-label="Navegación principal" className="flex-1 space-y-1 px-3 py-5">

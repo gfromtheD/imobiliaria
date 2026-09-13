@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   },
   description:
     "Virtual staging inmobiliario para preparar fotografías de inmuebles con precisión.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

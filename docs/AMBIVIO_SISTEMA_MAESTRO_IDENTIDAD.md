@@ -230,8 +230,18 @@ El wordmark puede convivir con el tagline:
 
 **Un espacio. Distintos futuros.**
 
-No reconstruir ni alterar el wordmark arbitrariamente durante tareas de
-UI.
+### Especificación de producción
+
+El wordmark web es texto real en **Chillax Variable** (peso visual 500,
+tracking `-0.07em`). No se entrega como contorno SVG: conserva renderizado
+de alta calidad, accesibilidad, búsqueda y carga mediante la fuente local
+ya versionada. No alterar sus letras, sustituirlo por otra familia ni aplicar
+efectos. Su altura de referencia es la altura óptica del isotipo, no la caja
+completa del SVG.
+
+La implementación reutilizable es `components/brand/ambivio-mark.tsx`.
+Ofrece `wordmark`, `symbol` y `lockup`; el tagline es una extensión editorial,
+no parte inseparable del logotipo.
 
 ------------------------------------------------------------------------
 
@@ -276,22 +286,35 @@ El isotipo:
 -   debe funcionar en negro sobre blanco y blanco sobre negro;
 -   debe sobrevivir a tamaños pequeños.
 
-### Estado técnico
+### Activo maestro y construcción
 
-El concepto y diseño están seleccionados, pero el activo definitivo debe
-ser **reconstruido y normalizado como vector**.
+El master es `public/brand/ambivio-symbol.svg`. Es un SVG de 64 × 64 con
+dos recorridos abiertos, stroke de 6 unidades, terminal cuadrado y una rama
+común de `x=6` a `x=22`. Cada recorrido se abre con una curva continua hacia
+`y=18` o `y=46` y termina en `x=58`. No contiene transformaciones, IDs,
+scripts, raster ni metadatos de editor; usa `currentColor` para poder
+invertirse sin duplicar geometría.
 
-La imagen conceptual generada durante el proceso de identidad NO debe
-tratarse como archivo maestro de producción.
+La lectura de izquierda a derecha expresa un origen común y dos futuros. De
+derecha a izquierda expresa convergencia. No es una A, casa o flecha literal.
+`app/icon.svg` y `app/apple-icon.tsx` repiten exactamente esta geometría sobre
+blanco para los contextos de sistema que no heredan `currentColor`.
 
-Proceso pendiente:
+### Lockups, espacio y tamaños
 
-1.  reconstrucción geométrica;
-2.  normalización de curvas, proporciones y espaciado;
-3.  creación de SVG maestro;
-4.  validación a tamaños pequeños;
-5.  exportación de PNG cuando sea necesaria;
-6.  generación de favicon y app icons desde el SVG maestro.
+- **Lockup horizontal principal:** isotipo a la izquierda, separación de
+  `0.625em` y wordmark alineado a su centro óptico. Es el uso de shell y auth.
+- **Isotipo:** navegación estrecha, favicon, app icon y contextos de menos de
+  96 px de ancho.
+- **Wordmark:** solo cuando el contexto ya identifica la marca y no hay espacio
+  para el lockup; no sustituye al icono del navegador.
+- **Tagline:** únicamente en composición editorial amplia; no se usa en
+  sidebar, cabeceras, controles, favicon ni app icon.
+- **Zona de protección:** dejar alrededor del lockup al menos el ancho de la
+  rama común del símbolo (aprox. `0.5em` a su tamaño de uso). No encajonar el
+  logo con bordes, fondos o texto ajeno dentro de esa zona.
+- **Mínimos:** lockup 112 px de ancho, wordmark 72 px y símbolo 16 px. Por
+  debajo, usar solo el símbolo a 16 px o más.
 
 ------------------------------------------------------------------------
 
@@ -299,15 +322,10 @@ Proceso pendiente:
 
 ### Estado
 
-**Provisional.**
+Sistema operativo para producto y futuras piezas; la landing lo aplicará,
+pero no necesita inventar una segunda identidad.
 
-La dirección actual toma principios del Bauhaus y del racionalismo
-gráfico como marco de trabajo, pero no pretende reproducir literalmente
-una identidad histórica Bauhaus.
-
-Debe revisarse a medida que Ambivio se aplique a pantallas reales.
-
-### Principios actuales
+### Reglas de composición
 
 -   función antes que ornamento;
 -   geometría elemental;
@@ -316,8 +334,12 @@ Debe revisarse a medida que Ambivio se aplique a pantallas reales.
 -   jerarquía tipográfica;
 -   espacio negativo consciente;
 -   composiciones asimétricas pero equilibradas;
--   líneas, bloques, círculos, rectángulos y formas simples cuando
-    tengan una función;
+-   líneas de 1 px para separar áreas, conectar una relación o dar una
+    referencia de lectura; nunca como confeti;
+-   bloques y marcos rectos para contener tarea, dato o fotografía; el borde
+    es estructura, no decoración;
+-   recortes y máscaras solo para revelar, comparar o mantener el encuadre de
+    una fotografía; no para convertir imágenes en formas decorativas;
 -   fotografía como protagonista;
 -   monocromía;
 -   estructura arquitectónica y contemporánea.
@@ -335,6 +357,14 @@ La geometría puede:
 -   acompañar transformaciones.
 
 No debe añadirse simplemente para "decorar una pantalla Bauhaus".
+
+### Retícula y espacio
+
+Trabajar primero con una retícula de contenido y divisores. Una composición
+puede ser asimétrica cuando esa asimetría prioriza una fotografía, un resultado
+o una acción. El espacio negativo debe separar decisiones y permitir que la
+imagen conserve protagonismo. No usar círculos, cuadrados, colores primarios
+ni formas flotantes como atajo visual.
 
 ### Advertencia
 
@@ -402,6 +432,18 @@ Cuando se comparen fotografías:
 
 La selección de imágenes de marketing puede priorizar los mejores
 ejemplos, pero debe seguir transmitiendo resultados plausibles.
+
+### Reglas operativas
+
+- Mostrar originales y resultados con el mismo encuadre y una proporción
+  estable; `object-fit: contain` en comparativas evita inventar un recorte.
+- En producto, la foto es el color. Los overlays son negro o blanco con
+  opacidad suficiente para legibilidad y solo contienen etiquetas o controles.
+- En marketing, un titular no debe cubrir arquitectura, ventana, mobiliario o
+  el punto comparativo; reservar una zona negativa real o crear un bloque
+  estructural adyacente.
+- No aplicar filtro de marca, gradiente ni corrección cromática global. Cada
+  propiedad conserva luz, materialidad y carácter propios.
 
 ------------------------------------------------------------------------
 
@@ -609,29 +651,37 @@ Cuando falte una especificación concreta, diseñar una solución coherente
 con este sistema en lugar de aceptar automáticamente el default del
 framework.
 
-### Estado
+### Sistema cuantitativo
 
-La dirección de motion está definida, pero el **Motion System
-cuantitativo** todavía está pendiente.
+Los tokens residen en `app/globals.css`. Son pocos y cubren las interacciones
+existentes: `--motion-duration-press: 120ms`, `--motion-duration-control:
+160ms`, `--motion-duration-overlay: 180ms`, `--motion-duration-panel: 220ms`,
+`--motion-duration-image: 260ms` y `--motion-duration-async: 1800ms`.
 
-Más adelante deberá concretar, mediante investigación y pruebas:
+- **Press (120):** respuesta táctil y de botón; escala máxima `0.98`.
+- **Control (160):** color, borde, foco y clip-path de una comparación.
+- **Overlay (180):** select, diálogo y navegación contextual.
+- **Panel (220):** transición ocasional de una sección, no navegación por
+  teclado.
+- **Imagen (260):** reveal o cambio visual de una fotografía cuando aporte
+  continuidad; no usar para demorar una imagen disponible.
+- **Async (1800):** única repetición continua actual, una línea geométrica de
+  estado; no representa porcentaje ni progreso falso.
 
--   duraciones;
--   curvas de easing;
--   springs;
--   escalas;
--   desplazamientos;
--   stagger;
--   patrones de entrada/salida;
--   motion de fotografías;
--   loading;
--   generación;
--   transiciones de navegación;
--   comportamiento responsive;
--   reduced motion.
+`--motion-ease-out` (`cubic-bezier(0.23, 1, 0.32, 1)`) se usa para entrada,
+feedback y controles. `--motion-ease-in-out` (`cubic-bezier(0.77, 0, 0.175,
+1)`) se reserva para la pulsación continua de la línea async y transformaciones
+visuales. No se usan rebotes ni `ease-in` para acciones UI.
 
-Hasta que exista esa especificación, no inventar un sistema complejo de
-valores como si estuviera aprobado.
+### Reduced motion
+
+Con `prefers-reduced-motion`, el producto conserva estados, foco, contraste y
+feedback de color/borde, pero elimina traslados, escalas, zoom y repeticiones.
+La línea de generación pasa a ser estática y visible; no hay spinner. Las
+comparativas reaccionan de forma instantánea, por lo que teclado y pointer
+siguen explicando el resultado sin animación. La regla global corta transiciones
+y animaciones restantes de componentes de terceros para impedir movimiento
+accidental.
 
 ------------------------------------------------------------------------
 
@@ -820,31 +870,12 @@ Orden recomendado:
 
 ------------------------------------------------------------------------
 
-## 17. Elementos pendientes
+## 17. Aplicaciones pendientes
 
-Los siguientes puntos NO deben tratarse como cerrados:
-
-### Sistema gráfico
-
-La referencia Bauhaus/racionalista es provisional. Debe validarse
-mediante aplicaciones reales.
-
-### Motion System cuantitativo
-
-Pendiente de investigación y definición detallada.
-
-### Isotipo de producción
-
-Pendiente de vectorización y normalización técnica.
-
-### Favicon / app icons
-
-Pendientes y deben derivarse del SVG maestro, no de la imagen
-conceptual.
-
-### Aplicación UI
-
-Pendiente de ejecución y validación.
+Los activos de producto ya cerrados son isotipo vectorial, wordmark técnico,
+lockup, icono del navegador/app, sistema gráfico y tokens de motion. Shell y
+auth consumen el lockup principal. Quedan aplicaciones que por alcance aún no
+se han diseñado:
 
 ### Landing
 

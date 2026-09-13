@@ -5,6 +5,7 @@ import { Menu, User, Xmark } from "iconoir-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AmbivioMark } from "@/components/brand/ambivio-mark";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { ProductIcon } from "@/components/ui/product-icon";
@@ -82,9 +83,7 @@ export function AppShell({
                 </DialogPrimitive.Portal>
               </DialogPrimitive.Root>
 
-              <span className="font-heading text-[1.45rem] leading-none tracking-[-0.065em] lg:hidden">
-                ambivio
-              </span>
+              <AmbivioMark className="lg:hidden" symbolClassName="size-5" />
             </div>
 
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">

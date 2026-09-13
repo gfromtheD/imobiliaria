@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Clock, Download, RefreshDouble, Undo, WarningTriangle } from "iconoir-react";
+import { CheckCircle, Clock, Download, FrameAlt, RefreshDouble, Undo, WarningTriangle } from "iconoir-react";
 
 import { BeforeAfterSlider } from "@/components/generations/before-after-slider";
 import { GenerationForm } from "@/components/generations/generation-form";
@@ -45,7 +45,7 @@ function ProcessingPanel({ status }: { status: "pending" | "processing" }) {
       <div aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 bg-foreground ${isProcessing ? "ambivio-generation-line motion-reduce:animate-none" : "opacity-35"}`} />
       <div className="flex items-start gap-4 pl-2">
         <div className="mt-0.5 grid size-9 shrink-0 place-items-center border border-foreground bg-background">
-          <ProductIcon icon={isProcessing ? RefreshDouble : Clock} className={`size-4 ${isProcessing ? "ambivio-processing-mark motion-reduce:animate-none" : ""}`} />
+          <ProductIcon icon={isProcessing ? FrameAlt : Clock} className="size-4" />
         </div>
         <div>
           <p className="text-sm font-medium">{isProcessing ? "El espacio se está reinterpretando." : "Tu generación está registrada y esperando procesamiento."}</p>

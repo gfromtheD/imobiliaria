@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { AmbivioMark } from "@/components/brand/ambivio-mark";
+
 export function AuthCard({
   title,
   description,
@@ -13,9 +15,10 @@ export function AuthCard({
     <section className="w-full max-w-md" aria-labelledby="auth-title">
       <Link
         href="/login"
-        className="font-heading text-[1.85rem] leading-none tracking-[-0.075em] outline-none focus-visible:ring-2 focus-visible:ring-ring/30 lg:hidden"
+        aria-label="Ambivio · ir a iniciar sesión"
+        className="outline-none focus-visible:ring-2 focus-visible:ring-ring/30 lg:hidden"
       >
-        ambivio
+        <AmbivioMark symbolClassName="size-6" />
       </Link>
       <p className="mt-10 text-[0.6875rem] font-medium tracking-[0.14em] text-muted-foreground uppercase lg:mt-0">
         Área privada

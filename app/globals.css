@@ -93,6 +93,9 @@
   --motion-duration-press: 120ms;
   --motion-duration-control: 160ms;
   --motion-duration-overlay: 180ms;
+  --motion-duration-panel: 220ms;
+  --motion-duration-image: 260ms;
+  --motion-duration-async: 1800ms;
   --motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --motion-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
@@ -155,6 +158,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .ambivio-generation-line {
+    animation: none;
+    opacity: 0.7;
+    transform: none;
+  }
 }
 
 @keyframes ambivio-generation-line {
@@ -162,14 +171,6 @@
   50% { transform: scaleY(1); transform-origin: center; opacity: 1; }
 }
 
-@keyframes ambivio-processing-mark {
-  to { transform: rotate(180deg); }
-}
-
 .ambivio-generation-line {
-  animation: ambivio-generation-line 1.8s var(--motion-ease-in-out) infinite;
-}
-
-.ambivio-processing-mark {
-  animation: ambivio-processing-mark 1.2s linear infinite;
+  animation: ambivio-generation-line var(--motion-duration-async) var(--motion-ease-in-out) infinite;
 }
